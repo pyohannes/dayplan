@@ -346,6 +346,7 @@ int dpl_tasklist_filter_period_free_ (struct DplTaskListFilter_ *filter)
 }
 
 
+/* mention inclusive filter */
 int dpl_tasklist_filter_period (time_t start, time_t end, 
         DplTaskListFilter **filter)
 {
@@ -381,7 +382,8 @@ int dpl_tasklist_filter_today (DplTaskListFilter **filter)
     tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
     begin = mktime (&tm);
 
-    return dpl_tasklist_filter_period (begin, begin + (60 * 60 * 24), filter);
+    return dpl_tasklist_filter_period (begin, begin + (60 * 60 * 24) - 1, 
+            filter);
 }
 
 

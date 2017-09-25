@@ -45,6 +45,7 @@ set (TESTLIST test/task_title
               test/tasklist_remove
               test/tasklist_filter_period_1
               test/tasklist_filter_today_1
+              test/tasklist_filter_today_2
               test/tasklist_filter_task_ref_1
               test/tasklist_filter_ref_done_1
               test/parse_empty
