@@ -7,6 +7,11 @@
 static const char *usage = "Usage: dayplan [OPTIONS] FILE\n"
 "  -h, --help         Print this help text.\n"
 "  -t, --today        Only process today's entries.\n"
+"  -d, --date         Only process entries relevant to the date given. This\n"
+"                     is ignored when used in conjunction with --date-to,\n"
+"                     --date-from or --today.\n"
+"  -b, --date-from    Only process entries after and including the given date.\n"
+"  -c, --date-to      Only process entries before and including the given date.\n"
 "  -o, --oneline      Print all task information in one line.\n"
 "  -s, --show-summary Combines --show-tasks and --show-refs.\n"
 "  -a, --show-tasks   Show tasks.\n"
@@ -15,7 +20,8 @@ static const char *usage = "Usage: dayplan [OPTIONS] FILE\n"
 
 
 static struct {
-    int today;
+    time_t tm_from;
+    time_t tm_to;
     int oneline;
     int show_summary;
     int show_tasks;
@@ -23,6 +29,7 @@ static struct {
     int show_title;
     const char *input;
 } options = {
+    0,
     0,
     0,
     0,
@@ -162,8 +169,9 @@ int print_ref_list (DplTaskList *tasks, const char *title, int done,
         iter_undone = iter_done;
     }
 
-    if (options.today) {
-        ret = dpl_tasklist_filter_today (&ftoday);
+    if (options.tm_from || options.tm_to) {
+        ret = dpl_tasklist_filter_period (options.tm_from, options.tm_to, 
+                &ftoday);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
             return ret;
@@ -216,8 +224,9 @@ int print_task_list (DplTaskList *tasks)
         return ret;
     }
 
-    if (options.today) {
-        ret = dpl_tasklist_filter_today (&ftoday);
+    if (options.tm_from || options.tm_to) {
+        ret = dpl_tasklist_filter_period (options.tm_from, options.tm_to, 
+                &ftoday);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
             return ret;
@@ -249,8 +258,12 @@ int parse_arguments (int argc, char *argv[])
 {
     int option_index = 0;
     int c;
+    struct tm tm;
     static struct option long_options[] = {
         { "today", 0, 0, 't' },
+        { "date", 1, 0, 'd' },
+        { "date-from", 1, 0, 'b' },
+        { "date-to", 1, 0, 'c' },
         { "oneline", 0, 0, 'o' },
         { "show-summary", 0, 0, 's' },
         { "show-tasks", 0, 0, 'a' },
@@ -259,12 +272,45 @@ int parse_arguments (int argc, char *argv[])
         { 0, 0, 0, 0 }
     };
 
+#define PARSE_DATE { \
+    time_t now = time (0); \
+    int ret; \
+    localtime_r (&now, &tm); \
+    ret = sscanf (optarg, "%u-%u-%u", &tm.tm_year, &tm.tm_mon, &tm.tm_mday); \
+    if (ret != 3) { \
+        fprintf (stderr, "Error: Invalid date format: %s\n", optarg); \
+        return DPL_ERR_INPUT; \
+    } \
+    tm.tm_mon -= 1; \
+    tm.tm_year -= 1900; \
+    tm.tm_sec = tm.tm_min = tm.tm_hour = 0; \
+}
 
-    while ((c = getopt_long (argc, argv, "thosra", long_options, 
+    while ((c = getopt_long (argc, argv, "thosradbc", long_options, 
                     &option_index)) != -1) {
         switch (c) {
             case 't':
-                options.today = 1;
+                options.tm_from = time (0);
+                localtime_r (&options.tm_from, &tm);
+                tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+                printf ("### %s\n", asctime (&tm));
+                options.tm_from = mktime (&tm);
+                options.tm_to = options.tm_from + (3600 * 24) - 1;
+                break;
+            case 'b':
+                PARSE_DATE
+                options.tm_from = mktime (&tm);
+                break;
+            case 'c':
+                PARSE_DATE
+                options.tm_to = mktime (&tm) + (3600 * 24) - 1;
+                break;
+            case 'd':
+                PARSE_DATE
+                tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+                printf ("### %s\n", asctime (&tm));
+                options.tm_from = mktime (&tm);
+                options.tm_to = options.tm_from + (3600 * 24) - 1;
                 break;
             case 'h':
                 printf (usage);
@@ -286,6 +332,8 @@ int parse_arguments (int argc, char *argv[])
                 return DPL_ERR_INPUT;
         }
     }
+
+    printf ("### from: %ld, to: %ld\n", options.tm_from, options.tm_to);
 
     options.show_title = (options.show_refs + options.show_tasks) > 1;
 
