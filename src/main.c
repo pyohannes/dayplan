@@ -1,21 +1,47 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <string.h>
+#include <unistd.h>
 #include "dpl/dpl.h"
+#include "dpl/utils.h"
+
+static const char *COLORS[] = {
+    "\x1B[0m",
+    "\x1B[33m",
+    "\x1B[31m",
+    "\x1B[34m",
+    "\x1B[36m",
+};
 
 
-static const char *usage = "Usage: dayplan [OPTIONS] FILE\n"
+
+#define COLOR_DEFAULT COLORS[0]
+#define COLOR_YELLOW  COLORS[1]
+#define COLOR_RED     COLORS[2]
+#define COLOR_BLUE    COLORS[3]
+#define COLOR_CYAN    COLORS[4]
+
+
+static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
+"\n"
+"The following commands are supported:\n"
+"\n"
+"   help       Print this help text.\n"
+"   work       Print a list of work items.\n"
+"   tasks      Print a list of tasks.\n"
+"\n"
+"The following options are supported:\n"
 "  -h, --help         Print this help text.\n"
+"  -f, --file FILE    Read data from given file FILE. This option is\n"
+"                     obligatory.\n"
 "  -t, --today        Only process today's entries.\n"
-"  -d, --date         Only process entries relevant to the date given. This\n"
+"  -d, --date DATE    Only process entries relevant to the date given. This\n"
 "                     is ignored when used in conjunction with --date-to,\n"
 "                     --date-from or --today.\n"
-"  -b, --date-from    Only process entries after and including the given date.\n"
-"  -c, --date-to      Only process entries before and including the given date.\n"
+"  -b, --date-from DATE\n"
+"                     Only process entries after and including the given date.\n"
+"  -c, --date-to DATE Only process entries before and including the given date.\n"
 "  -o, --oneline      Print all task information in one line.\n"
-"  -s, --show-summary Combines --show-tasks and --show-refs.\n"
-"  -a, --show-tasks   Show tasks.\n"
-"  -r, --show-refs    Show todo references.\n"
 "";
 
 
@@ -26,7 +52,6 @@ static struct {
     int show_summary;
     int show_tasks;
     int show_refs;
-    int show_title;
     const char *input;
 } options = {
     0,
@@ -35,12 +60,11 @@ static struct {
     0,
     1,
     0,
-    0,
     0
 };
 
 
-int print_task (DplTask *task, int print_time_info) 
+int print_task (DplTask *task, int print_time_info, int refinfo) 
 {
     time_t begin, end;
     const char *title;
@@ -48,6 +72,8 @@ int print_task (DplTask *task, int print_time_info)
     char sbegin[1024];
     char sdurance[1024];
     int ret;
+    DplRef *ref;
+    int done = 0;
 
     ret = dpl_task_begin_get (task, &begin);
     if (ret != DPL_OK) {
@@ -86,17 +112,48 @@ int print_task (DplTask *task, int print_time_info)
         return DPL_ERR_SYS;
     } 
 
+    if (refinfo) {
+        if ((ret = dpl_task_ref_get (task, &ref)) != DPL_OK) {
+            fprintf (stderr, "Error: Cannot obtain reference from task.\n");
+            return ret;
+        }
+        if (ref) { 
+            if ((ret = dpl_ref_done_get (ref, &done)) != DPL_OK) {
+                fprintf (stderr, "Error: Cannot done info from ref.\n");
+                return ret;
+            }
+        } else {
+            refinfo = 0;
+            done = 0;
+        }
+    }
+
     if (options.oneline) {
         if (print_time_info) {
-            printf ("%s  %s  %s\n", sbegin, sdurance, title ? title : "");
-        } else {
-            printf ("    %s\n", title ? title : "");
+            printf ("%s%s%s  %s  ", COLOR_YELLOW, sbegin, 
+                    COLOR_DEFAULT, sdurance);
         }
+        if (refinfo) {
+            printf ("%s[%s]%s ", 
+                    done ? COLOR_CYAN : COLOR_RED,
+                    done ? "DONE" : "OPEN",
+                    COLOR_DEFAULT);
+        }
+        printf ("%s\n", title ? title : "");
     } else {
         if (print_time_info) {
-            printf ("Date:    %s\n", sbegin);
-            printf ("Durance: %s\n\n", sdurance);
+            printf ("%sDate:    %s%s\n", COLOR_YELLOW, sbegin, 
+                    COLOR_DEFAULT);
+            printf ("Durance: %s\n", sdurance);
         }
+        if (refinfo) {
+            printf ("%sStatus:  %s%s\n", 
+                    done ? COLOR_CYAN : COLOR_RED,
+                    done ? "done" : "open",
+                    COLOR_DEFAULT);
+        }
+
+        printf ("\n");
 
         if (title) {
             printf ("    %s\n\n", title);
@@ -111,7 +168,7 @@ int print_task (DplTask *task, int print_time_info)
 }
 
 
-int print_ref_list (DplTaskList *tasks, const char *title, int done, 
+int print_ref_list (DplTaskList *tasks, int done, 
         int undone)
 {
     DplTaskListIter *iter_full, *iter_refs, *iter_done, *iter_undone, *iter;
@@ -187,12 +244,13 @@ int print_ref_list (DplTaskList *tasks, const char *title, int done,
         iter = iter_refs;
     }
 
-    if (options.show_title) {
-        printf ("\n%s\n", title);
-    }
-
     while ((ret = dpl_tasklistiter_next (iter, &task)) == DPL_OK) {
-        print_task (task, 0);
+        int done = 0;
+        DplRef *ref;
+
+        DPL_FORWARD_ERROR (dpl_task_ref_get (task, &ref));
+        DPL_FORWARD_ERROR (dpl_ref_done_get (ref, &done));
+        DPL_FORWARD_ERROR (print_task (task, 0, 1));
     }
 
     return DPL_OK;
@@ -242,12 +300,8 @@ int print_task_list (DplTaskList *tasks)
         iter = iter_tasks;
     }
 
-    if (options.show_title) {
-        printf ("\nTASKS\n");
-    }
-
     while ((ret = dpl_tasklistiter_next (iter, &task)) == DPL_OK) {
-        print_task (task, 1);
+        print_task (task, 1, 1);
     }
 
     return DPL_OK;
@@ -268,6 +322,7 @@ int parse_arguments (int argc, char *argv[])
         { "show-summary", 0, 0, 's' },
         { "show-tasks", 0, 0, 'a' },
         { "show-refs", 0, 0, 'r' },
+        { "file", 1, 0, 'f' },
         { "help", 0, 0, 'h' },
         { 0, 0, 0, 0 }
     };
@@ -286,14 +341,16 @@ int parse_arguments (int argc, char *argv[])
     tm.tm_sec = tm.tm_min = tm.tm_hour = 0; \
 }
 
-    while ((c = getopt_long (argc, argv, "thosradbc", long_options, 
+    while ((c = getopt_long (argc, argv, "thosrad:b:c:f:", long_options, 
                     &option_index)) != -1) {
         switch (c) {
+            case 'f':
+                options.input = optarg;
+                break;
             case 't':
                 options.tm_from = time (0);
                 localtime_r (&options.tm_from, &tm);
                 tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
-                printf ("### %s\n", asctime (&tm));
                 options.tm_from = mktime (&tm);
                 options.tm_to = options.tm_from + (3600 * 24) - 1;
                 break;
@@ -308,7 +365,6 @@ int parse_arguments (int argc, char *argv[])
             case 'd':
                 PARSE_DATE
                 tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
-                printf ("### %s\n", asctime (&tm));
                 options.tm_from = mktime (&tm);
                 options.tm_to = options.tm_from + (3600 * 24) - 1;
                 break;
@@ -333,16 +389,15 @@ int parse_arguments (int argc, char *argv[])
         }
     }
 
-    printf ("### from: %ld, to: %ld\n", options.tm_from, options.tm_to);
-
-    options.show_title = (options.show_refs + options.show_tasks) > 1;
-
-    if (optind != (argc - 1)) {
+    if (!options.input) {
         fprintf (stderr, usage);
         return DPL_ERR_INPUT;
     }
 
-    options.input = argv[optind];
+    if (optind >= argc) {
+        fprintf (stderr, usage);
+        return DPL_ERR_INPUT;
+    }
 
     return DPL_OK;
 }
@@ -352,6 +407,14 @@ int main (int argc, char *argv[])
 {
     int ret;
     DplTaskList *tasks;
+
+    if (!isatty (1)) {
+        COLORS[0] = "";
+        COLORS[1] = "";
+        COLORS[2] = "";
+        COLORS[3] = "";
+        COLORS[4] = "";
+    }
 
     ret = parse_arguments (argc, argv);
     if (ret != DPL_OK) {
@@ -364,22 +427,30 @@ int main (int argc, char *argv[])
         return 1;
     }
 
-    if (options.show_tasks) {
-        ret = print_task_list (tasks);
-        if (ret != DPL_OK) {
-            return 1;
-        }
-    }
-
-    if (options.show_refs) {
-        ret = print_ref_list (tasks, "TODO DONE", 1, 0);
-        if (ret != DPL_OK) {
-            return 1;
-        }
-        ret = print_ref_list (tasks, "TODO OPEN", 0, 1);
-        if (ret != DPL_OK) {
-            return 1;
-        }
+    while (optind < argc) {
+        if (strcmp (argv[optind], "work") == 0) {
+            ret = print_task_list (tasks);
+            if (ret != DPL_OK) {
+                ret = 1;
+                break;
+            }
+        } else if (strcmp (argv[optind], "tasks") == 0) {
+            ret = print_ref_list (tasks, 1, 0);
+            if (ret != DPL_OK) {
+                ret = 1;
+                break;
+            }
+            ret = print_ref_list (tasks, 0, 1);
+            if (ret != DPL_OK) {
+                ret = 1;
+                break;
+            }
+        } else {
+            fprintf (stderr, usage);
+            ret = 1;
+            break;
+        } 
+        optind += 1;
     }
 
     dpl_tasklist_free (tasks, 1);
