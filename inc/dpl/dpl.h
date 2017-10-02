@@ -11,6 +11,8 @@
 # include "dpl/tasklist.h"
 # include "dpl/parser.h"
 # include "dpl/time.h"
+# include "dpl/group.h"
+# include "dpl/acc.h"
 
 
 #endif /* DPL_H */

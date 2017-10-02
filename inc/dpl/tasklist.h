@@ -8,7 +8,6 @@
 # include "dpl/task.h"
 
 
-
 struct DplTaskListIter_;
 typedef struct DplTaskListIter_ DplTaskListIter;
 

@@ -19,6 +19,8 @@ set (SOURCES src/task.c
              src/tasklist.c
              src/time.c
              src/utils.c
+             src/acc.c
+             src/group.c
              ${BISON_dpl_parser_OUTPUTS}
 )
 
@@ -60,6 +62,9 @@ set (TESTLIST test/task_title
               test/parse_task_list_end_2
               test/time_fmt_durance
               test/parse_ref_list_1
+              test/acc_durance_1
+              test/group_by_day_1
+              test/group_by_title_1
 )
 
 set (TEST_SOURCE_LIST)

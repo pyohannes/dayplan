@@ -29,6 +29,7 @@ static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "   help       Print this help text.\n"
 "   work       Print a list of work items.\n"
 "   tasks      Print a list of tasks.\n"
+"   sum        Print an accumulated sum of time for tasks.\n"
 "\n"
 "The following options are supported:\n"
 "  -h, --help         Print this help text.\n"
@@ -52,6 +53,7 @@ static struct {
     int show_summary;
     int show_tasks;
     int show_refs;
+    int group_by_day;
     const char *input;
 } options = {
     0,
@@ -59,6 +61,7 @@ static struct {
     0,
     0,
     1,
+    0,
     0,
     0
 };
@@ -163,6 +166,75 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
             printf ("    %s\n\n", desc);
         }
     }
+
+    return DPL_OK;
+}
+
+
+int print_sums (DplTaskList *tasks)
+{
+    DplGroup *first;
+    DplTaskListIter *iter_full, *iter_tasks, *iter;
+    DplTaskListFilter *ftoday, *fref;
+    int ret;
+
+    ret = dpl_tasklist_iter (tasks, &iter_full);
+    if (ret != DPL_OK) {
+        fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
+        return ret;
+    }
+
+    ret = dpl_tasklist_filter_tasks (&fref);
+    if (ret != DPL_OK) {
+        fprintf (stderr, "Error: Cannot obtain reference filter.\n");
+        return ret;
+    }
+
+    ret = dpl_tasklist_filter (iter_full, fref, &iter_tasks);
+    if (ret != DPL_OK) {
+        fprintf (stderr, "Error: Cannot apply reference filter.\n");
+        return ret;
+    }
+
+    if (options.tm_from || options.tm_to) {
+        ret = dpl_tasklist_filter_period (options.tm_from, options.tm_to, 
+                &ftoday);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
+            return ret;
+        }
+    
+        ret = dpl_tasklist_filter (iter_tasks, ftoday, &iter);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot assign task list filter.\n");
+            return ret;
+        }
+    } else {
+        /* FIXME: careful when freeing! */
+        iter = iter_tasks;
+    }
+
+    if (options.group_by_day) {
+        DPL_FORWARD_ERROR (dpl_group_by_day (iter, &first));
+    } else {
+        DPL_FORWARD_ERROR (dpl_group_by_title (iter, &first));
+    }
+
+    while (first) {
+        time_t durance;
+        DplTaskListIter *iter;
+        char sdurance[1024];
+        const char *name;
+
+        DPL_FORWARD_ERROR (dpl_group_name_get (first, &name));
+        DPL_FORWARD_ERROR (dpl_group_tasks_get (first, &iter));
+        DPL_FORWARD_ERROR (dpl_acc_durance (iter, &durance));
+        DPL_FORWARD_ERROR (dpl_time_fmt_durance (sdurance, 1024, "%Hh %mm",
+                    durance));
+
+        printf ("%9s %s\n", sdurance, name);
+        DPL_FORWARD_ERROR (dpl_group_next (first, &first));
+    } 
 
     return DPL_OK;
 }
@@ -323,6 +395,7 @@ int parse_arguments (int argc, char *argv[])
         { "show-tasks", 0, 0, 'a' },
         { "show-refs", 0, 0, 'r' },
         { "file", 1, 0, 'f' },
+        { "group-by-day", 0, 0, 'g' },
         { "help", 0, 0, 'h' },
         { 0, 0, 0, 0 }
     };
@@ -341,7 +414,7 @@ int parse_arguments (int argc, char *argv[])
     tm.tm_sec = tm.tm_min = tm.tm_hour = 0; \
 }
 
-    while ((c = getopt_long (argc, argv, "thosrad:b:c:f:", long_options, 
+    while ((c = getopt_long (argc, argv, "thosrad:b:c:f:g", long_options, 
                     &option_index)) != -1) {
         switch (c) {
             case 'f':
@@ -382,6 +455,9 @@ int parse_arguments (int argc, char *argv[])
                 break;
             case 's':
                 options.show_tasks = options.show_refs = 1;
+                break;
+            case 'g':
+                options.group_by_day = 1;
                 break;
             case '?':
                 fprintf (stderr, "Error: Invalid arguments.\n%s", usage);
@@ -441,6 +517,12 @@ int main (int argc, char *argv[])
                 break;
             }
             ret = print_ref_list (tasks, 0, 1);
+            if (ret != DPL_OK) {
+                ret = 1;
+                break;
+            }
+        } else if (strcmp (argv[optind], "sum") == 0) {
+            ret = print_sums (tasks);
             if (ret != DPL_OK) {
                 ret = 1;
                 break;
