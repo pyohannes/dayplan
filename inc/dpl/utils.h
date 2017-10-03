@@ -25,9 +25,9 @@
 
 
 #define DPL_FORWARD_ERROR(DPL_value) { \
-    int r = DPL_value; \
-    if (r != DPL_OK) { \
-        return r; \
+    int DPL_r = DPL_value; \
+    if (DPL_r != DPL_OK) { \
+        return DPL_r; \
     } \
 }
 

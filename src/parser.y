@@ -12,7 +12,7 @@ static time_t daytime;
 
 struct _Reference {
     int id;
-    DplTask *ref;
+    DplRef *ref;
     struct _Reference *next;
 };
 
@@ -85,6 +85,33 @@ static int dpl_parse_end_set (DplTaskList *tasks)
             DPL_FORWARD_ERROR (dpl_tasklist_remove (tasks, curr));
         }
     }
+    return DPL_OK;
+}
+
+
+static int dpl_parse_copy_open_refs ()
+{
+    struct _Reference *r = refs;
+
+    while (r) {
+        int done;
+        const char *title;
+
+        DPL_FORWARD_ERROR (dpl_ref_done_get (r->ref, &done));
+        if (!done) {
+            DplTask *task;
+
+            DPL_FORWARD_ERROR (dpl_ref_title_get (r->ref, &title));
+            DPL_FORWARD_ERROR (dpl_task_new (&task));
+            DPL_FORWARD_ERROR (dpl_task_begin_set (task, daytime));
+            DPL_FORWARD_ERROR (dpl_task_title_set (task, title));
+            DPL_FORWARD_ERROR (dpl_task_ref_set (task, r->ref));
+            DPL_FORWARD_ERROR (dpl_task_type_set (task, ref_type));
+            DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, task));
+        }
+        r = r->next;
+    }
+
     return DPL_OK;
 }
 
@@ -243,6 +270,7 @@ date : number HYPHEN number HYPHEN number
      {
         struct tm date = { 0, 0, 0, $5, $3 - 1, $1 - 1900, 0, 0, 1 };
         daytime = mktime (&date);
+        dpl_parse_copy_open_refs ();
      }
      ;
 

@@ -35,7 +35,7 @@ int test_tasklist_filter_today_2 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_tasklist_len (tasks, &len));
-    DPL_ASSERT_EQ (len, 4);
+    DPL_ASSERT_EQ (len, 6);
 
     DPL_ASSERT_OK (dpl_tasklist_filter_today (&today));
     DPL_ASSERT_OK (dpl_tasklist_iter (tasks, &iter));
