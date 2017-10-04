@@ -7,6 +7,7 @@
 
 static const char *COLORS[] = {
     "\x1B[0m",
+    "\x1B[30;1m",
     "\x1B[33m",
     "\x1B[31m",
     "\x1B[34m",
@@ -16,10 +17,11 @@ static const char *COLORS[] = {
 
 
 #define COLOR_DEFAULT COLORS[0]
-#define COLOR_YELLOW  COLORS[1]
-#define COLOR_RED     COLORS[2]
-#define COLOR_BLUE    COLORS[3]
-#define COLOR_CYAN    COLORS[4]
+#define COLOR_GREY    COLORS[1]
+#define COLOR_YELLOW  COLORS[2]
+#define COLOR_RED     COLORS[3]
+#define COLOR_BLUE    COLORS[4]
+#define COLOR_CYAN    COLORS[5]
 
 
 static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
@@ -77,6 +79,7 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
     int ret;
     DplRef *ref;
     int done = 0;
+    int refid = 0;
 
     ret = dpl_task_begin_get (task, &begin);
     if (ret != DPL_OK) {
@@ -125,9 +128,14 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
                 fprintf (stderr, "Error: Cannot done info from ref.\n");
                 return ret;
             }
+            if ((ret = dpl_ref_id_get (ref, &refid)) != DPL_OK) {
+                fprintf (stderr, "Error: Cannot get reference id.\n");
+                return ret;
+            }
         } else {
             refinfo = 0;
             done = 0;
+            refid = 0;
         }
     }
 
@@ -137,13 +145,21 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
                     COLOR_DEFAULT, sdurance);
         }
         if (refinfo) {
-            printf ("%s[%s]%s ", 
+            printf ("%s(%s) %s#%d%s ", 
                     done ? COLOR_CYAN : COLOR_RED,
-                    done ? "DONE" : "OPEN",
+                    done ? "done" : "open",
+                    COLOR_GREY,
+                    refid,
                     COLOR_DEFAULT);
         }
         printf ("%s\n", title ? title : "");
     } else {
+        if (refinfo) {
+            printf ("%sId:      #%d%s\n", 
+                    COLOR_GREY,
+                    refid,
+                    COLOR_DEFAULT);
+        }
         if (print_time_info) {
             printf ("%sDate:    %s%s\n", COLOR_YELLOW, sbegin, 
                     COLOR_DEFAULT);

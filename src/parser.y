@@ -241,6 +241,7 @@ ref : refid text NEWLINE itembody
         DplRef *ref;
         DPL_FORWARD_ERROR (dpl_parse_new_task (0, &current, 1));
         DPL_FORWARD_ERROR (dpl_task_ref_get (current, &ref));
+        DPL_FORWARD_ERROR (dpl_ref_id_set (ref, $1));
         DPL_FORWARD_ERROR (dpl_parse_add_reference ($1, ref));
         DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, current));
     }
