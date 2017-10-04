@@ -34,38 +34,38 @@ add_library (dayplan_static STATIC ${SOURCES})
 
 enable_testing ()
 
-set (TESTLIST test/task_title
-              test/task_desc
-              test/task_begin
-              test/task_end
-              test/task_ref
-              test/ref_id
-              test/ref_title
-              test/ref_desc
-              test/tasklist_new
-              test/tasklist_push
-              test/tasklist_remove
-              test/tasklist_filter_period_1
-              test/tasklist_filter_today_1
-              test/tasklist_filter_today_2
-              test/tasklist_filter_task_ref_1
-              test/tasklist_filter_task_ref_2
-              test/tasklist_filter_ref_done_1
-              test/parse_empty
-              test/parse_task_single_1
-              test/parse_task_single_2
-              test/parse_task_single_paddings
-              test/parse_error_indent_1
-              test/parse_error_indent_2
-              test/parse_task_list_1
-              test/parse_task_list_2
-              test/parse_task_list_end_1
-              test/parse_task_list_end_2
-              test/time_fmt_durance
-              test/parse_ref_list_1
-              test/acc_durance_1
-              test/group_by_day_1
-              test/group_by_title_1
+set (TESTLIST test/unit/task_title
+              test/unit/task_desc
+              test/unit/task_begin
+              test/unit/task_end
+              test/unit/task_ref
+              test/unit/ref_id
+              test/unit/ref_title
+              test/unit/ref_desc
+              test/unit/tasklist_new
+              test/unit/tasklist_push
+              test/unit/tasklist_remove
+              test/unit/tasklist_filter_period_1
+              test/unit/tasklist_filter_today_1
+              test/unit/tasklist_filter_today_2
+              test/unit/tasklist_filter_task_ref_1
+              test/unit/tasklist_filter_task_ref_2
+              test/unit/tasklist_filter_ref_done_1
+              test/unit/parse_empty
+              test/unit/parse_task_single_1
+              test/unit/parse_task_single_2
+              test/unit/parse_task_single_paddings
+              test/unit/parse_error_indent_1
+              test/unit/parse_error_indent_2
+              test/unit/parse_task_list_1
+              test/unit/parse_task_list_2
+              test/unit/parse_task_list_end_1
+              test/unit/parse_task_list_end_2
+              test/unit/time_fmt_durance
+              test/unit/parse_ref_list_1
+              test/unit/acc_durance_1
+              test/unit/group_by_day_1
+              test/unit/group_by_title_1
 )
 
 set (TEST_SOURCE_LIST)
@@ -76,10 +76,18 @@ endforeach ()
 create_test_sourcelist (SOURCES_TEST main.c 
     ${TEST_SOURCE_LIST}
 )
-add_executable (dayplan_test main.c test/dpl_test.c ${TEST_SOURCE_LIST})
+add_executable (dayplan_test main.c test/unit/dpl_test.c ${TEST_SOURCE_LIST})
 target_link_libraries (dayplan_test dayplan_static)
 
 foreach (testname ${TESTLIST})
     get_filename_component (tname ${testname} NAME_WE)
     add_test (${tname} dayplan_test "${testname}")
 endforeach ()
+
+add_test (
+    NAME test/system 
+    COMMAND pytest 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties (
+    test/system 
+    PROPERTIES ENVIRONMENT "PATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PATH}")
