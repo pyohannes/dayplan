@@ -329,15 +329,10 @@ int print_ref_list (DplTaskList *tasks, int done,
         }
     } else {
         /* FIXME: careful when freeing! */
-        iter = iter_refs;
+        iter = iter_undone;
     }
 
     while ((ret = dpl_tasklistiter_next (iter, &task)) == DPL_OK) {
-        int done = 0;
-        DplRef *ref;
-
-        DPL_FORWARD_ERROR (dpl_task_ref_get (task, &ref));
-        DPL_FORWARD_ERROR (dpl_ref_done_get (ref, &done));
         DPL_FORWARD_ERROR (print_task (task, 0, 1));
     }
 
