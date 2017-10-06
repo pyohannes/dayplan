@@ -15,5 +15,6 @@
 # define DPL_ERR_INPUT    -8
 # define DPL_ERR_SYS      -9
 # define DPL_ERR_OTHER    -10
+# define DPL_ERR_CONFLICT -11
 
 #endif /* DPL_DEFS_H */

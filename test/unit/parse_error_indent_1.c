@@ -10,7 +10,7 @@ int test_unit_parse_error_indent_1 (int argc, char *argv[])
                 "  08:00  Projects/Dayplan\n"
                 " no full deindent\n"));
 
-    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks), DPL_ERR_SYNTAX);
+    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks, 0), DPL_ERR_SYNTAX);
     remove (DPL_tmpfile);
 
     return 0;

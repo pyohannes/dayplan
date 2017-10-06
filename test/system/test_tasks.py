@@ -2,7 +2,7 @@ from dpltest import assert_dpl_cmd_error, assert_dpl_cmd_ok
 
 
 def test_ref_id_conflict():
-    assert_dpl_cmd_error(["tasks"],
+    assert_dpl_cmd_error(["tasks", "--strict"],
 """2017-09-09
     #1  Task 1
 2017-09-10

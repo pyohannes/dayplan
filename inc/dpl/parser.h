@@ -7,7 +7,7 @@
 # include "dpl/tasklist.h"
 
 
-int dpl_parse (const char *filename, DplTaskList **list);
+int dpl_parse (const char *filename, DplTaskList **list, int strict);
 
 
 #endif /* DAYPLAN_PARSER_H */

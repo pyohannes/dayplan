@@ -12,7 +12,7 @@ int test_unit_parse_task_list_end_2 (int argc, char *argv[])
                 "  09:00  Coffee\n"
                 "    Everybody needs a break.\n"));
 
-    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks), DPL_ERR_INPUT);
+    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks, 0), DPL_ERR_INPUT);
 
     remove (DPL_tmpfile);
 

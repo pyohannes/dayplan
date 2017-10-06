@@ -32,7 +32,7 @@ int test_unit_tasklist_filter_today_2 (int argc, char *argv[])
                 tm_tomorrow.tm_mday);
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN, content));
 
-    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks));
+    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_tasklist_len (tasks, &len));
     DPL_ASSERT_EQ (len, 6);

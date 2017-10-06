@@ -26,7 +26,7 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
                 "  09:00  Break/Coffee\n"
                 "  11:00\n"));
 
-    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks));
+    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_tasklist_len (tasks, &len));
     DPL_ASSERT_EQ (len, 7);

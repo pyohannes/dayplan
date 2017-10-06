@@ -25,7 +25,7 @@ int test_unit_tasklist_filter_period_1 (int argc, char *argv[])
                 "  09:00  Coffee\n"
                 "  11:00\n"));
 
-    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks));
+    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_tasklist_len (tasks, &len));
     DPL_ASSERT_EQ (len, 5);

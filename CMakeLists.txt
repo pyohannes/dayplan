@@ -62,6 +62,7 @@ set (TESTLIST test/unit/task_title
               test/unit/parse_task_list_3
               test/unit/parse_task_list_end_1
               test/unit/parse_task_list_end_2
+              test/unit/parse_task_list_ref_conflict_1
               test/unit/time_fmt_durance
               test/unit/parse_ref_list_1
               test/unit/acc_durance_1

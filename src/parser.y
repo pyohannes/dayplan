@@ -32,6 +32,8 @@ static FILE *yyin;
 static const char *yyfilename;
 static size_t yylineno;
 
+static int yystrict;
+
 #define RTRIM_WHITESPACE(s, len) { \
     while (s && len > 0 && s[len-1] == ' ') { \
         s[len-1] = 0; \
@@ -116,24 +118,6 @@ static int dpl_parse_copy_open_refs ()
 }
 
 
-static int dpl_parse_add_reference (int id, const DplRef *ref)
-{
-    struct _Reference *newref = malloc (sizeof (struct _Reference));
-
-    if (!newref) {
-        return DPL_ERR_MEM;
-    }
-
-    newref->ref = ref;
-    newref->next = refs;
-    newref->id = id;
-
-    refs = newref;
-
-    return DPL_OK;
-}
-
-
 static int dpl_parse_get_reference (int id, DplRef **ref) 
 {
     struct _Reference *r = refs;
@@ -147,6 +131,31 @@ static int dpl_parse_get_reference (int id, DplRef **ref)
     }
 
     return DPL_ERR_NOTFOUND;
+}
+
+
+static int dpl_parse_add_reference (int id, const DplRef *ref)
+{
+    struct _Reference *newref = malloc (sizeof (struct _Reference));
+
+    if (!newref) {
+        return DPL_ERR_MEM;
+    }
+
+    struct _Reference *existing_ref;
+    if (dpl_parse_get_reference (id, &existing_ref) == DPL_OK) {
+        char errmsg[1024];
+        snprintf (errmsg, 1024, "Duplicate task id #%d", id);
+        DPL_FORWARD_ERROR (yywarning (errmsg));
+    }
+
+    newref->ref = ref;
+    newref->next = refs;
+    newref->id = id;
+
+    refs = newref;
+
+    return DPL_OK;
 }
 
 
@@ -477,17 +486,30 @@ int yyerror (char *s)
 {
     fprintf (stderr, "%s:%ld: error: %s\n", yyfilename, yylineno, s);
 
-    return 1;
+    return DPL_ERR_SYNTAX;
 }
 
 
-int dpl_parse (const char *filename, DplTaskList **list)
+int yywarning (char *s)
+{
+    if (yystrict) {
+        return yyerror (s);
+    } else {
+        fprintf (stderr, "%s:%ld: warning: %s\n", yyfilename, yylineno, s);
+    }
+
+    return DPL_OK;
+}
+
+
+int dpl_parse (const char *filename, DplTaskList **list, int strict)
 {
     int ret = DPL_OK;
 
 #ifdef DEBUG
     yydebug = 1;
 #endif
+    yystrict = strict;
     yyfilename = filename;
     yylineno = 1;
     yytextbufferlen = 1024;
@@ -515,8 +537,10 @@ int dpl_parse (const char *filename, DplTaskList **list)
         return ret;
     }
 
-    switch (yyparse ()) {
-        case 0: break;
+    /* FIXME: clear up different return types of yyparse */
+    switch (ret = yyparse ()) {
+        case 0: ret = DPL_OK;
+                break;
         case 1: ret = DPL_ERR_SYNTAX;
                 break;
         case 2: ret = DPL_ERR_MEM;

@@ -11,7 +11,7 @@ int test_unit_parse_error_indent_2 (int argc, char *argv[])
                 "    Description\n"
                 "      Further invalid indent\n"));
 
-    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks), DPL_ERR_SYNTAX);
+    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks, 0), DPL_ERR_SYNTAX);
     remove (DPL_tmpfile);
 
     return 0;

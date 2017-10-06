@@ -45,6 +45,7 @@ static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "                     Only process entries after and including the given date.\n"
 "  -c, --date-to DATE Only process entries before and including the given date.\n"
 "  -o, --oneline      Print all task information in one line.\n"
+"  -s, --strict       Turn warnings into errors.\n"
 "";
 
 
@@ -52,17 +53,13 @@ static struct {
     time_t tm_from;
     time_t tm_to;
     int oneline;
-    int show_summary;
-    int show_tasks;
-    int show_refs;
     int group_by_day;
+    int strict;
     const char *input;
 } options = {
     0,
     0,
     0,
-    0,
-    1,
     0,
     0,
     0
@@ -402,11 +399,9 @@ int parse_arguments (int argc, char *argv[])
         { "date-from", 1, 0, 'b' },
         { "date-to", 1, 0, 'c' },
         { "oneline", 0, 0, 'o' },
-        { "show-summary", 0, 0, 's' },
-        { "show-tasks", 0, 0, 'a' },
-        { "show-refs", 0, 0, 'r' },
         { "file", 1, 0, 'f' },
         { "group-by-day", 0, 0, 'g' },
+        { "strict", 0, 0, 's' },
         { "help", 0, 0, 'h' },
         { 0, 0, 0, 0 }
     };
@@ -458,17 +453,11 @@ int parse_arguments (int argc, char *argv[])
             case 'o':
                 options.oneline = 1;
                 break;
-            case 'a':
-                options.show_tasks = 1;
-                break;
-            case 'r':
-                options.show_refs = 1;
-                break;
-            case 's':
-                options.show_tasks = options.show_refs = 1;
-                break;
             case 'g':
                 options.group_by_day = 1;
+                break;
+            case 's':
+                options.strict = 1;
                 break;
             case '?':
                 fprintf (stderr, "Error: Invalid arguments.\n%s", usage);
@@ -508,7 +497,7 @@ int main (int argc, char *argv[])
         return 1;
     }
 
-    ret = dpl_parse (options.input, &tasks);
+    ret = dpl_parse (options.input, &tasks, options.strict);
     if (ret != DPL_OK) {
         /* dpl_parse prints an error */
         return 1;
