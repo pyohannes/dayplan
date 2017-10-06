@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 
 if (NOT WIN32)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -pedantic -Wextra")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter -Wno-unused-variable")
 endif ()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -69,6 +69,7 @@ set (TESTLIST test/unit/task_title
               test/unit/acc_durance_1
               test/unit/group_by_day_1
               test/unit/group_by_title_1
+              test/unit/skip_whitespaces_1
 )
 
 set (TEST_SOURCE_LIST)
