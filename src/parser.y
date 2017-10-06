@@ -241,6 +241,7 @@ day : date paddednewline INDENT items
     ;
 
 items : DEINDENT
+      | NEWLINE items
       | item items
       | ref items
       ;
