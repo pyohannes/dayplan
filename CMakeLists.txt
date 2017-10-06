@@ -60,6 +60,7 @@ set (TESTLIST test/unit/task_title
               test/unit/parse_task_list_1
               test/unit/parse_task_list_2
               test/unit/parse_task_list_3
+              test/unit/parse_task_multiline_1
               test/unit/parse_task_list_end_1
               test/unit/parse_task_list_end_2
               test/unit/parse_task_list_ref_conflict_1

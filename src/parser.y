@@ -330,7 +330,7 @@ multilinetext : multilinetextchar
               ;
 
 multilinetextchar : textchar { $$ = $1; }
-                  | NEWLINE  { $$ = ' '; }
+                  | NEWLINE  { $$ = '\n'; }
                   ;
 
 textchar  : LETTER { $$ = yyc; }
@@ -410,7 +410,8 @@ int yylex ()
         if (yyc == '\n') {
             /* ignore empty lines. */
             yylineno += 1;
-            return yylex ();
+            return NEWLINE;
+            //return yylex ();
         }
 
         parse_indent = 0;

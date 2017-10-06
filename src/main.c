@@ -176,7 +176,19 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
         }
 
         if (desc) {
-            printf ("    %s\n\n", desc);
+            char *pos = desc;
+
+            printf ("    ");
+
+            while (*pos) {
+                if (*pos == '\n') {
+                    printf ("\n    ");
+                } else {
+                    putchar (*pos);
+                }
+                pos += 1;
+            }
+            printf ("\n\n");
         }
     }
 
