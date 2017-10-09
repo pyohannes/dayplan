@@ -1,7 +1,9 @@
 /* +
  */
 
+
 #include <string.h>
+#include <stdio.h>
 #include "dpl/time.h"
 #include "dpl/defs.h"
 
@@ -11,6 +13,9 @@ int dpl_time_fmt_durance (char *buf, size_t bufsize, const char *format,
 {
     int secs, mins, hours, days;
     const char *pos = format;
+    size_t bufpos = 0;
+    const char *fmt;
+    int value;
 
     secs = mins = hours = days = 0;
 
@@ -35,43 +40,66 @@ int dpl_time_fmt_durance (char *buf, size_t bufsize, const char *format,
     strncpy (buf, "", bufsize);
 
     while (pos && *pos) {
-        int printed;
 
-        if (strstr (pos, "%d") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%d", days);
-            pos += 2;
-        } else if (strstr (pos, "%D") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%d", days);
-            pos += 2;
-        } else if (strstr (pos, "%h") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%2d", hours);
-            pos += 2;
-        } else if (strstr (pos, "%H") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%d", 
-                    hours + (days * 24));
-            pos += 2;
-        } else if (strstr (pos, "%m") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%2d", mins); 
-            pos += 2;
-        } else if (strstr (pos, "%M") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%d", 
-                    mins + (hours * 60) + (days * 1440));
-            pos += 2;
-        } else if (strstr (pos, "%s") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%2d", secs); 
-            pos += 2;
-        } else if (strstr (pos, "%S") == pos) {
-            printed = snprintf (buf + strlen (buf), bufsize, "%d", 
-                    secs + (mins * 60) + (hours * 3600) + (days * 86400));
-            pos += 2;
-        } else {
-            printed = snprintf (buf + strlen (buf), bufsize, "%c", *pos);
-            pos += 1;
-        }
-
-        if ((strlen(buf) + 1 == bufsize) && printed) {
+        if (bufpos >= (bufsize - 1)) {
             return DPL_ERR_SIZE;
         }
+
+        /* no format specifier */
+        if (*pos != '%') {
+            buf[bufpos++] = *pos++;
+            buf[bufpos] = '\0';
+            continue;
+        }
+
+        pos += 1;
+
+        /* '%' is the last character in the string */
+        if (!*pos) {
+            buf[bufpos++] = '%';
+            buf[bufpos] = '\0';
+            break;
+        }
+
+        /* check character after '%' */
+        switch (*pos) {
+            case 'd': 
+                fmt = "%d"; value = days; 
+                break;
+            case 'D': 
+                fmt = "%d"; value = days;
+                break;
+            case 'h': 
+                fmt = "%2d"; value = hours; 
+                break;
+            case 'H': 
+                fmt = "%d"; value = hours + (days * 24);
+                break;
+            case 'm': 
+                fmt = "%2d"; value = mins; 
+                break;
+            case 'M': 
+                fmt = "%d", value = mins + (hours * 60) + (days * 1440);
+                break;
+            case 's': 
+                fmt = "%2d"; value = secs; 
+                break;
+            case 'S': 
+                fmt = "%d"; 
+                value =  secs + (mins * 60) + (hours * 3600) + (days * 86400);
+                break;
+            default:
+                 fmt = "%c"; value = *pos;
+                 break;
+        }
+
+        /* write and check for overflow */
+        bufpos += snprintf (buf + bufpos, bufsize - bufpos, fmt, value);
+        if (bufpos >= bufsize) {
+            return DPL_ERR_SIZE;
+        }
+
+        pos += 1;
     }
 
     return DPL_OK;

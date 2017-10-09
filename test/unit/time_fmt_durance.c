@@ -42,5 +42,9 @@ int test_unit_time_fmt_durance (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_time_fmt_durance (fmt, BUFSIZE, "%Ss", 93050));
     DPL_ASSERT_EQ (strcmp (fmt, "93050s"), 0);
 
+    DPL_ASSERT_EQ (dpl_time_fmt_durance (fmt, 3, "%Ss", 93050), DPL_ERR_SIZE);
+
+    DPL_ASSERT_EQ (dpl_time_fmt_durance (0, 0, "%Ss", 93050), DPL_ERR_SIZE);
+
     return 0;
 }
