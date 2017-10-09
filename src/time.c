@@ -5,6 +5,7 @@
 #include "dpl/time.h"
 #include "dpl/defs.h"
 
+
 int dpl_time_fmt_durance (char *buf, size_t bufsize, const char *format, 
         time_t durance)
 {
