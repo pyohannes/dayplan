@@ -6,13 +6,19 @@ int test_unit_tasklist_filter_period_1 (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter;
     DplTaskListIter *fiter;
-    DplTask *task;
+    DplEntry *task;
     DplTaskListFilter *period;
     time_t begin;
     time_t end;
     const char *title;
     uint32_t len;
-    struct tm tm = { 0, 0, 0, 10, 8, 117, 0, 0, 1 };
+    struct tm tm;
+    tm.tm_sec = 0; 
+    tm.tm_min = 0; 
+    tm.tm_hour = 0; 
+    tm.tm_mday = 10; 
+    tm.tm_mon = 8; 
+    tm.tm_year = 117; 
 
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN,
                 "2017-09-10\n"
@@ -38,15 +44,15 @@ int test_unit_tasklist_filter_period_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter, period, &fiter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Lunch"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Planning"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);
@@ -62,11 +68,11 @@ int test_unit_tasklist_filter_period_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter, period, &fiter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Coffee"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);

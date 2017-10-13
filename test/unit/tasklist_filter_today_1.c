@@ -6,12 +6,15 @@ int test_unit_tasklist_filter_today_1 (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter;
     DplTaskListIter *fiter;
-    DplTask *task;
+    DplEntry *task;
     DplTaskListFilter *today;
     const char *title;
     time_t now;
     uint32_t len;
-    struct tm tm = { 0, 0, 0, 10, 8, 117, 0, 0, 1 };
+    struct tm tm;
+    tm.tm_mday = 10;
+    tm.tm_mon = 8;
+    tm.tm_year = 117;
 
     char content[4096]; 
 
@@ -45,15 +48,15 @@ int test_unit_tasklist_filter_today_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter, today, &fiter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Writing test plans"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Lunch"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Meetings"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);

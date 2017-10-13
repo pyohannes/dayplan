@@ -5,7 +5,7 @@
 # define DAYPLAN_TASKLIST_H
 
 # include <stdint.h>
-# include "dpl/task.h"
+# include "dpl/entry.h"
 
 
 struct DplTaskListIter_;
@@ -13,7 +13,7 @@ typedef struct DplTaskListIter_ DplTaskListIter;
 
 
 int dpl_tasklistiter_free (DplTaskListIter *iter);
-int dpl_tasklistiter_next (DplTaskListIter *iter, DplTask **next);
+int dpl_tasklistiter_next (DplTaskListIter *iter, DplEntry **next);
 
 
 struct DplTaskList_;
@@ -26,8 +26,8 @@ int dpl_tasklist_free (DplTaskList *list, int freetasks);
 int dpl_tasklist_len (const DplTaskList *list, uint32_t *len);
 int dpl_tasklist_iter (const DplTaskList *list, DplTaskListIter **iter);
 
-int dpl_tasklist_push (DplTaskList *list, const DplTask *task);
-int dpl_tasklist_remove (DplTaskList *list, const DplTask *task);
+int dpl_tasklist_push (DplTaskList *list, const DplEntry *task);
+int dpl_tasklist_remove (DplTaskList *list, const DplEntry *task);
 
 struct DplTaskListFilter_;
 typedef struct DplTaskListFilter_ DplTaskListFilter;

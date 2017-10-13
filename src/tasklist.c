@@ -8,7 +8,7 @@
 
 
 struct DplTaskListItem {
-    DplTask *item;
+    DplEntry *item;
     struct DplTaskListItem *next;
 };
 
@@ -16,7 +16,7 @@ struct DplTaskListItem {
 struct DplTaskListIter_
 {
     void *data;
-    int (*next_func)(struct DplTaskListIter_ *, DplTask **next);
+    int (*next_func)(struct DplTaskListIter_ *, DplEntry **next);
     DplTaskListIter *source;
 };
 
@@ -29,7 +29,7 @@ int dpl_tasklistiter_free (DplTaskListIter *iter)
 }
 
 
-int dpl_tasklistiter_next (DplTaskListIter *iter, DplTask **next)
+int dpl_tasklistiter_next (DplTaskListIter *iter, DplEntry **next)
 {
     if (iter->next_func) {
         return iter->next_func (iter, next);
@@ -80,7 +80,7 @@ int dpl_tasklist_free (DplTaskList *list, int freetasks)
         curr = next;
         next = next->next;
         if (freetasks) {
-            dpl_task_free (curr->item);
+            dpl_entry_free (curr->item);
         }
         free (curr);
     }
@@ -114,7 +114,7 @@ int dpl_tasklist_iter (const DplTaskList *list, DplTaskListIter **iter)
     return DPL_OK;
 }
 
-int dpl_tasklist_push (DplTaskList *list, const DplTask *task)
+int dpl_tasklist_push (DplTaskList *list, const DplEntry *task)
 {
     struct DplTaskListItem *new = malloc (sizeof (struct DplTaskListItem));
 
@@ -138,7 +138,7 @@ int dpl_tasklist_push (DplTaskList *list, const DplTask *task)
 }
 
 
-int dpl_tasklist_remove (DplTaskList *list, const DplTask *task)
+int dpl_tasklist_remove (DplTaskList *list, const DplEntry *task)
 {
     struct DplTaskListItem *curr;
     struct DplTaskListItem *prev;
@@ -171,7 +171,7 @@ int dpl_tasklist_remove (DplTaskList *list, const DplTask *task)
 
 struct DplTaskListFilter_
 {
-    int (*next_func)(struct DplTaskListIter_ *, DplTask **next);
+    int (*next_func)(struct DplTaskListIter_ *, DplEntry **next);
     int (*free_func)(struct DplTaskListFilter_ *);
     void *data;
 };
@@ -186,20 +186,30 @@ int dpl_tasklist_filter_simple_free_ (struct DplTaskListFilter_ *filter)
 
 
 static int dpl_tasklist_filter_done_next_ (struct DplTaskListIter_ *iter, 
-        DplTask **next)
+        DplEntry **next)
 {
-    DplTask *task;
+    DplEntry *task;
     int ret;
     int donevalue = (int)iter->data;
 
     while ((ret = dpl_tasklistiter_next (iter->source, &task)) == DPL_OK) {
-        DplRef *ref;
+        DplEntry *ref;
         int done;
-        DPL_FORWARD_ERROR (dpl_task_ref_get (task, &ref));
+        DplEntryType type;
+
+        dpl_entry_type_get (task, &type);
+
+        if (type == ENTRY_WORK) {
+            dpl_entry_work_task_get (task, &ref);
+        } else {
+            ref = task;
+        }
+
         if (!ref) {
             continue;
         }
-        DPL_FORWARD_ERROR (dpl_ref_done_get (ref, &done));
+
+        DPL_FORWARD_ERROR (dpl_entry_task_done_get (ref, &done));
         if (done == donevalue) {
             *next = task;
             return DPL_OK;
@@ -239,15 +249,15 @@ int dpl_tasklist_filter_undone (DplTaskListFilter **filter)
 
 
 static int dpl_tasklist_filter_tasks_next_ (struct DplTaskListIter_ *iter, 
-        DplTask **next)
+        DplEntry **next)
 {
-    DplTask *task;
+    DplEntry *task;
     int ret;
 
     while ((ret = dpl_tasklistiter_next (iter->source, &task)) == DPL_OK) {
-        DplTaskType type;
-        DPL_FORWARD_ERROR (dpl_task_type_get (task, &type));
-        if (type == task_type) {
+        DplEntryType type;
+        DPL_FORWARD_ERROR (dpl_entry_type_get (task, &type));
+        if (type == ENTRY_WORK) {
             *next = task;
             return DPL_OK;
         }
@@ -274,15 +284,15 @@ int dpl_tasklist_filter_tasks (DplTaskListFilter **filter)
 
 
 static int dpl_tasklist_filter_refs_next_ (struct DplTaskListIter_ *iter, 
-        DplTask **next)
+        DplEntry **next)
 {
-    DplTask *task;
+    DplEntry *task;
     int ret;
 
     while ((ret = dpl_tasklistiter_next (iter->source, &task)) == DPL_OK) {
-        DplTaskType type;
-        DPL_FORWARD_ERROR (dpl_task_type_get (task, &type));
-        if (type == ref_type) {
+        DplEntryType type;
+        DPL_FORWARD_ERROR (dpl_entry_type_get (task, &type));
+        if (type == ENTRY_TASK) {
             *next = task;
             return DPL_OK;
         }
@@ -316,17 +326,23 @@ struct DplTaskListFilter_Period_
 
 
 int dpl_tasklist_filter_period_next_ (struct DplTaskListIter_ *iter, 
-        DplTask **next)
+        DplEntry **next)
 {
     struct DplTaskListFilter_Period_ *data = 
         (struct DplTaskListFilter_Period_ *)iter->data;
-    DplTask *task;
+    DplEntry *task;
     int ret;
 
     while ((ret = dpl_tasklistiter_next (iter->source, &task)) == DPL_OK) {
         time_t ibegin, iend;
-        DPL_FORWARD_ERROR (dpl_task_begin_get (task, &ibegin));
-        DPL_FORWARD_ERROR (dpl_task_end_get (task, &iend));
+        DplEntryType type;
+        DPL_FORWARD_ERROR (dpl_entry_begin_get (task, &ibegin));
+        DPL_FORWARD_ERROR (dpl_entry_type_get (task, &type));
+        if (type == ENTRY_WORK) {
+            DPL_FORWARD_ERROR (dpl_entry_work_end_get (task, &iend));
+        } else {
+            iend = ibegin;
+        }
         if (data->begin <= ibegin && data->end >= iend) {
             *next = task;
             return DPL_OK;

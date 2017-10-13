@@ -66,7 +66,7 @@ static struct {
 };
 
 
-int print_task (DplTask *task, int print_time_info, int refinfo) 
+int print_task (DplEntry *task, int print_time_info, int refinfo) 
 {
     time_t begin, end;
     const char *title;
@@ -74,29 +74,31 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
     char sbegin[1024];
     char sdurance[1024];
     int ret;
-    DplRef *ref;
+    DplEntry *ref;
     int done = 0;
     int refid = 0;
 
-    ret = dpl_task_begin_get (task, &begin);
+    ret = dpl_entry_begin_get (task, &begin);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task begin time.\n");
         return ret;
     }
 
-    ret = dpl_task_end_get (task, &end);
-    if (ret != DPL_OK) {
+    ret = dpl_entry_work_end_get (task, &end);
+    if (ret == DPL_ERR_TYPE) {
+        end = begin;
+    } else if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task end time.\n");
         return ret;
     }
 
-    ret = dpl_task_title_get (task, &title);
+    ret = dpl_entry_name_get (task, &title);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task title.\n");
         return ret;
     }
 
-    ret = dpl_task_desc_get (task, &desc);
+    ret = dpl_entry_desc_get (task, &desc);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task description.\n");
         return ret;
@@ -116,23 +118,33 @@ int print_task (DplTask *task, int print_time_info, int refinfo)
     } 
 
     if (refinfo) {
-        if ((ret = dpl_task_ref_get (task, &ref)) != DPL_OK) {
-            fprintf (stderr, "Error: Cannot obtain reference from task.\n");
+        DplEntry *ref = task;
+        DplEntryType type;
+
+        if ((ret = dpl_entry_type_get (task, &type)) != DPL_OK) {
+            fprintf (stderr, "Error: Cannot get type info from ref.\n");
             return ret;
         }
-        if (ref) { 
-            if ((ret = dpl_ref_done_get (ref, &done)) != DPL_OK) {
-                fprintf (stderr, "Error: Cannot done info from ref.\n");
+        if (type == ENTRY_WORK) {
+            if ((ret = dpl_entry_work_task_get (task, &ref)) != DPL_OK) {
+                fprintf (stderr, "Error: Cannot get task from work.\n");
                 return ret;
             }
-            if ((ret = dpl_ref_id_get (ref, &refid)) != DPL_OK) {
+        }
+
+        if (ref) {
+            if ((ret = dpl_entry_task_done_get (ref, &done)) != DPL_OK) {
+                fprintf (stderr, "Error: Cannot get done info from ref.\n");
+                return ret;
+            }
+            if ((ret = dpl_entry_task_id_get (ref, &refid)) != DPL_OK) {
                 fprintf (stderr, "Error: Cannot get reference id.\n");
                 return ret;
             }
         } else {
-            refinfo = 0;
             done = 0;
             refid = 0;
+            refinfo = 0;
         }
     }
 
@@ -270,7 +282,7 @@ int print_ref_list (DplTaskList *tasks, int done,
 {
     DplTaskListIter *iter_full, *iter_refs, *iter_done, *iter_undone, *iter;
     DplTaskListFilter *ftoday, *fref, *fundone, *fdone;
-    DplTask *task;
+    DplEntry *task;
     int ret;
 
     ret = dpl_tasklist_iter (tasks, &iter_full);
@@ -353,7 +365,7 @@ int print_task_list (DplTaskList *tasks)
 {
     DplTaskListIter *iter_full, *iter_tasks, *iter;
     DplTaskListFilter *ftoday, *ftasks;
-    DplTask *task;
+    DplEntry *task;
     int ret;
 
     ret = dpl_tasklist_iter (tasks, &iter_full);

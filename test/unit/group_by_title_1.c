@@ -6,7 +6,7 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DplTaskList *tasks;
     DplGroup *groupfirst, *group;
     DplTaskListIter *iter;
-    DplTask *task;
+    DplEntry *task;
     const char *name;
     const char *title;
     uint32_t len;
@@ -41,13 +41,13 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Break/Lunch"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Break/Lunch"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Break/Coffee"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -58,7 +58,7 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Break/Coffee"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -69,10 +69,10 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Break/Lunch"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Break/Lunch"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -83,7 +83,7 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "General/Planning"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -94,7 +94,7 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "General/Planning"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -105,13 +105,13 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Test"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Implementation"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Test"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -122,13 +122,13 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Test"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Implementation"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Test"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -139,7 +139,7 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Implementation"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
@@ -150,10 +150,10 @@ int test_unit_group_by_title_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_group_tasks_get (group, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Test"), 0);
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan/Test"), 0);
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));

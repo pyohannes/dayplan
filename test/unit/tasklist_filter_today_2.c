@@ -6,7 +6,7 @@ int test_unit_tasklist_filter_today_2 (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter;
     DplTaskListIter *fiter;
-    DplTask *task;
+    DplEntry *task;
     DplTaskListFilter *today;
     const char *title;
     time_t now;
@@ -42,11 +42,11 @@ int test_unit_tasklist_filter_today_2 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter, today, &fiter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "A"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "B"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);

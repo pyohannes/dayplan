@@ -6,11 +6,19 @@ int test_unit_tasklist_filter_task_ref_2 (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter_ref, *iter_all, *iter;
     DplTaskListFilter *f_refs, *f_date;
-    DplTask *task;
-    DplRef *ref;
+    DplEntry *task;
+    const DplEntry *ref;
     const char *title;
     uint32_t len;
-    struct tm tm = { 0, 0, 0, 11, 8, 117, 0, 0, 1 };
+    struct tm tm;
+    tm.tm_sec = 0;
+    tm.tm_min = 0;
+    tm.tm_hour = 0;
+    tm.tm_mday = 11;
+    tm.tm_mon = 8;
+    tm.tm_year = 117;
+    tm.tm_isdst = 1;
+
     time_t begin = mktime (&tm);
     time_t end = begin + 3600;
 
@@ -38,8 +46,7 @@ int test_unit_tasklist_filter_task_ref_2 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter_ref, f_date, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_ref_get (task, &ref));
-    DPL_ASSERT_OK (dpl_ref_title_get (ref, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);

@@ -5,7 +5,7 @@ int test_unit_parse_task_list_2 (int argc, char *argv[])
 {
     DplTaskList *tasks;
     DplTaskListIter *iter;
-    DplTask *task;
+    DplEntry *task;
     time_t begin;
     time_t end;
     const char *title;
@@ -32,29 +32,29 @@ int test_unit_parse_task_list_2 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_iter (tasks, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_begin_get (task, &begin));
+    DPL_ASSERT_OK (dpl_entry_begin_get (task, &begin));
     DPL_ASSERT_EQ (begin, mktime (&tm_begin));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
-    DPL_ASSERT_OK (dpl_task_desc_get (task, &desc));
+    DPL_ASSERT_OK (dpl_entry_desc_get (task, &desc));
     DPL_ASSERT_EQ (strcmp (desc, "Wrote a few tests."), 0);
 
     tm_begin.tm_hour = 9;
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_begin_get (task, &begin));
+    DPL_ASSERT_OK (dpl_entry_begin_get (task, &begin));
     DPL_ASSERT_EQ (begin, mktime (&tm_begin));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Coffee"), 0);
-    DPL_ASSERT_OK (dpl_task_desc_get (task, &desc));
+    DPL_ASSERT_OK (dpl_entry_desc_get (task, &desc));
     DPL_ASSERT_EQ (strcmp (desc, "Everybody needs a break."), 0);
 
     tm_begin.tm_hour = 10;
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_begin_get (task, &begin));
+    DPL_ASSERT_OK (dpl_entry_begin_get (task, &begin));
     DPL_ASSERT_EQ (begin, mktime (&tm_begin));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
-    DPL_ASSERT_OK (dpl_task_desc_get (task, &desc));
+    DPL_ASSERT_OK (dpl_entry_desc_get (task, &desc));
     DPL_ASSERT_EQ (strcmp (desc, "Back to work."), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_free (iter));

@@ -70,7 +70,7 @@ int dpl_group_tasks_get (const DplGroup *group, DplTaskListIter **iter)
 }
 
 
-static int _dpl_group_add_for_name (const char *name, DplTask *task, 
+static int _dpl_group_add_for_name (const char *name, DplEntry *task, 
         DplGroup **first) 
 {
     DplGroup *found = 0;
@@ -128,7 +128,7 @@ static int _dpl_group_add_for_name (const char *name, DplTask *task,
 
 int dpl_group_by_title (DplTaskListIter *iter, DplGroup **first)
 {
-    DplTask *task;
+    DplEntry *task;
     const char *title;
     size_t titlepart_size = 1024;
     char *titlepart = malloc (titlepart_size + 1);
@@ -138,7 +138,7 @@ int dpl_group_by_title (DplTaskListIter *iter, DplGroup **first)
     while (dpl_tasklistiter_next (iter, &task) == DPL_OK) {
         int pos;
 
-        DPL_FORWARD_ERROR (dpl_task_title_get (task, &title));
+        DPL_FORWARD_ERROR (dpl_entry_name_get (task, &title));
         pos = strlen (title);
         if (pos > titlepart_size) {
             titlepart_size = pos * 2;
@@ -170,7 +170,7 @@ int dpl_group_by_title (DplTaskListIter *iter, DplGroup **first)
 
 int dpl_group_by_day (DplTaskListIter *iter, DplGroup **first)
 {
-    DplTask *task;
+    DplEntry *task;
     time_t begin;
     struct tm tm_begin;
     char date[16] = "";
@@ -178,7 +178,7 @@ int dpl_group_by_day (DplTaskListIter *iter, DplGroup **first)
     *first = 0;
 
     while (dpl_tasklistiter_next (iter, &task) == DPL_OK) {
-        DPL_FORWARD_ERROR (dpl_task_begin_get (task, &begin));
+        DPL_FORWARD_ERROR (dpl_entry_begin_get (task, &begin));
         localtime_r (&begin, &tm_begin);
         if (strftime (date, 16, "%Y-%m-%d", &tm_begin) < 10) {
             return DPL_ERR_SYS;

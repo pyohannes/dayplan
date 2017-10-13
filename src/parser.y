@@ -7,12 +7,12 @@
 #include "dpl/utils.h"
 
 static DplTaskList *tasks;
-static DplTask *current;
+static DplEntry *current;
 static time_t daytime;
 
 struct _Reference {
     int id;
-    DplRef *ref;
+    DplEntry *ref;
     struct _Reference *next;
 };
 
@@ -46,7 +46,7 @@ static int dpl_parse_end_set (DplTaskList *tasks)
 {
     DplTaskListIter *iter;
     DplTaskListFilter *taskfilter;
-    DplTask *curr, *next;
+    DplEntry *curr, *next;
     const char *title;
 
     DPL_FORWARD_ERROR (dpl_tasklist_iter (tasks, &iter));
@@ -57,20 +57,18 @@ static int dpl_parse_end_set (DplTaskList *tasks)
 
     while (dpl_tasklistiter_next (iter, &next) == DPL_OK) {
         time_t begin;
-        DplTaskType type;
-        DPL_FORWARD_ERROR (dpl_task_type_get (curr, &type));
-        if (type == task_type) {
-            DPL_FORWARD_ERROR (dpl_task_begin_get (next, &begin));
-        } else {
-            DPL_FORWARD_ERROR (dpl_task_begin_get (curr, &begin));
+        DplEntryType type;
+        DPL_FORWARD_ERROR (dpl_entry_type_get (curr, &type));
+        if (type == ENTRY_WORK) {
+            DPL_FORWARD_ERROR (dpl_entry_begin_get (next, &begin));
+            DPL_FORWARD_ERROR (dpl_entry_work_end_set (curr, begin));
         }
-        DPL_FORWARD_ERROR (dpl_task_end_set (curr, begin));
 
         curr = next;
     }
 
     /* curr is the last task and needs to be an end marker */
-    DPL_FORWARD_ERROR (dpl_task_title_get (curr, &title));
+    DPL_FORWARD_ERROR (dpl_entry_name_get (curr, &title));
     if (title) {
         yyerror ("No end marker task found");
         return DPL_ERR_INPUT;
@@ -81,7 +79,7 @@ static int dpl_parse_end_set (DplTaskList *tasks)
 
     while (dpl_tasklistiter_next (iter, &curr) == DPL_OK) {
         const char *title;
-        DPL_FORWARD_ERROR (dpl_task_title_get (curr, &title));
+        DPL_FORWARD_ERROR (dpl_entry_name_get (curr, &title));
 
         if (!title) {
             DPL_FORWARD_ERROR (dpl_tasklist_remove (tasks, curr));
@@ -99,16 +97,15 @@ static int dpl_parse_copy_open_refs ()
         int done;
         const char *title;
 
-        DPL_FORWARD_ERROR (dpl_ref_done_get (r->ref, &done));
+        DPL_FORWARD_ERROR (dpl_entry_task_done_get (r->ref, &done));
         if (!done) {
-            DplTask *task;
+            DplEntry *task;
 
-            DPL_FORWARD_ERROR (dpl_ref_title_get (r->ref, &title));
-            DPL_FORWARD_ERROR (dpl_task_new (&task));
-            DPL_FORWARD_ERROR (dpl_task_begin_set (task, daytime));
-            DPL_FORWARD_ERROR (dpl_task_title_set (task, title));
-            DPL_FORWARD_ERROR (dpl_task_ref_set (task, r->ref));
-            DPL_FORWARD_ERROR (dpl_task_type_set (task, ref_type));
+            DPL_FORWARD_ERROR (dpl_entry_name_get (r->ref, &title));
+            DPL_FORWARD_ERROR (dpl_entry_new (&task, ENTRY_TASK));
+            DPL_FORWARD_ERROR (dpl_entry_begin_set (task, daytime));
+            DPL_FORWARD_ERROR (dpl_entry_name_set (task, title));
+            DPL_FORWARD_ERROR (dpl_entry_task_id_set (task, r->id));
             DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, task));
         }
         r = r->next;
@@ -118,7 +115,7 @@ static int dpl_parse_copy_open_refs ()
 }
 
 
-static int dpl_parse_get_reference (int id, DplRef **ref) 
+static int dpl_parse_get_reference (int id, DplEntry **ref) 
 {
     struct _Reference *r = refs;
 
@@ -134,7 +131,7 @@ static int dpl_parse_get_reference (int id, DplRef **ref)
 }
 
 
-static int dpl_parse_add_reference (int id, const DplRef *ref)
+static int dpl_parse_add_reference (int id, const DplEntry *ref)
 {
     struct _Reference *newref = malloc (sizeof (struct _Reference));
 
@@ -170,9 +167,8 @@ static int dpl_parse_free_references ()
 }
 
 
-static int dpl_parse_new_task (time_t begin, DplTask **task, int newref)
+static int dpl_parse_new_task (time_t begin, DplEntry **task, int newref)
 {
-    DplRef *ref = 0;
     const char *title, *desc;
 
     RTRIM_WHITESPACE (yytext, yytextpos);
@@ -181,39 +177,31 @@ static int dpl_parse_new_task (time_t begin, DplTask **task, int newref)
     title = yytextpos ? dpl_skip_whitespaces (yytext) : 0;
     desc = yymultitextpos ? dpl_skip_whitespaces (yymultitext) : 0;
 
-    if (newref) {
-        DPL_FORWARD_ERROR (dpl_ref_new (&ref));
-        DPL_FORWARD_ERROR (dpl_ref_title_set (ref, title));
-        DPL_FORWARD_ERROR (dpl_ref_desc_set (ref, desc));
-        title = desc = 0;
-    } else if (!newref && title && (title[0] == '#' || title[0] == '+')) {
+    DPL_FORWARD_ERROR (dpl_entry_new (task, newref ? ENTRY_TASK : ENTRY_WORK));
+    DPL_FORWARD_ERROR (dpl_entry_name_set (*task, title));
+    DPL_FORWARD_ERROR (dpl_entry_desc_set (*task, desc));
+    DPL_FORWARD_ERROR (dpl_entry_begin_set (*task, daytime + begin));
+
+    if (!newref && title && (title[0] == '#' || title[0] == '+')) {
         int id = -1;
         int done = 0;
+        DplEntry *ref;
+
         if (sscanf (title, "+#%d", &id)) {
             done = 1;
         } else {
             sscanf (title, "#%d", &id);
         }
         if (id >= 0) {
-            if (dpl_parse_get_reference (id, &ref) != DPL_OK) {
-                ref = 0;
-            } else if (done) {
-                DPL_FORWARD_ERROR (dpl_ref_done_set (ref, done));
+            if (dpl_parse_get_reference (id, &ref) == DPL_OK) {
+                DPL_FORWARD_ERROR (dpl_entry_work_task_set (*task, ref));
+                if (done) {
+                    DPL_FORWARD_ERROR (dpl_entry_task_done_set (ref, done));
+                }
             }
         }
     }
 
-    DPL_FORWARD_ERROR (dpl_task_new (task));
-    DPL_FORWARD_ERROR (dpl_task_begin_set (*task, daytime + begin));
-    DPL_FORWARD_ERROR (dpl_task_title_set (*task, title));
-    DPL_FORWARD_ERROR (dpl_task_desc_set (*task, desc));
-    if (ref) {
-        DPL_FORWARD_ERROR (dpl_task_ref_set (*task, ref));
-    }
-    if (newref) {
-        DPL_FORWARD_ERROR (dpl_task_type_set (*task, ref_type));
-    }
-    
     /* reset buffers */
     yytextpos = 0;
     yymultitextpos = 0;
@@ -248,11 +236,10 @@ items : DEINDENT
 
 ref : refid text NEWLINE itembody 
     {
-        DplRef *ref;
+        DplEntry *ref;
         DPL_FORWARD_ERROR (dpl_parse_new_task (0, &current, 1));
-        DPL_FORWARD_ERROR (dpl_task_ref_get (current, &ref));
-        DPL_FORWARD_ERROR (dpl_ref_id_set (ref, $1));
-        DPL_FORWARD_ERROR (dpl_parse_add_reference ($1, ref));
+        DPL_FORWARD_ERROR (dpl_entry_task_id_set (current, $1));
+        DPL_FORWARD_ERROR (dpl_parse_add_reference ($1, current));
         DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, current));
     }
     
@@ -279,6 +266,7 @@ itembody :                               { $$ = 0; }
 
 date : number HYPHEN number HYPHEN number
      {
+        /* TODO: check for the isdst flag */
         struct tm date = { 0, 0, 0, $5, $3 - 1, $1 - 1900, 0, 0, 1 };
         daytime = mktime (&date);
         dpl_parse_copy_open_refs ();

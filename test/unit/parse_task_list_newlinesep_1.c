@@ -3,7 +3,7 @@
 
 int test_unit_parse_task_list_newlinesep_1 (int argc, char *argv[])
 {
-    DplTask *task;
+    DplEntry *task;
     DplTaskList *tasks;
     uint32_t len;
 

@@ -5,7 +5,7 @@ int test_unit_tasklist_filter_ref_done_1 (int argc, char *argv[])
 {
     DplTaskList *tasks;
     DplTaskListIter *iter_all, *iter_refs, *iter;
-    DplTask *task;
+    DplEntry *task;
     DplTaskListFilter *f_refs, *f_done, *f_undone;
     const char *title;
     uint32_t len;
@@ -38,11 +38,11 @@ int test_unit_tasklist_filter_ref_done_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter_refs, f_done, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Task 1"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Task 2"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);
@@ -58,11 +58,11 @@ int test_unit_tasklist_filter_ref_done_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter_refs, f_undone, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Task 3"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Task 4"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (iter, &task), DPL_ITER_END);

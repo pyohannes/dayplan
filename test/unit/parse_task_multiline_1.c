@@ -5,7 +5,7 @@ int test_unit_parse_task_multiline_1 (int argc, char *argv[])
 {
     DplTaskList *tasks;
     DplTaskListIter *iter;
-    DplTask *task;
+    DplEntry *task;
     const char *desc;
     uint32_t len;
 
@@ -27,7 +27,7 @@ int test_unit_parse_task_multiline_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_iter (tasks, &iter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (iter, &task));
-    DPL_ASSERT_OK (dpl_task_desc_get (task, &desc));
+    DPL_ASSERT_OK (dpl_entry_desc_get (task, &desc));
     DPL_ASSERT_EQ (strcmp (desc, 
 "A multiline comment.\n"
 "\n"

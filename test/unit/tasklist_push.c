@@ -6,12 +6,12 @@ int test_unit_tasklist_push (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter;
     uint32_t len;
-    DplTask *t1, *t2, *t3;
-    DplTask *curr;
+    DplEntry *t1, *t2, *t3;
+    DplEntry *curr;
 
-    DPL_ASSERT_OK (dpl_task_new (&t1));
-    DPL_ASSERT_OK (dpl_task_new (&t2));
-    DPL_ASSERT_OK (dpl_task_new (&t3));
+    DPL_ASSERT_OK (dpl_entry_new (&t1, ENTRY_WORK));
+    DPL_ASSERT_OK (dpl_entry_new (&t2, ENTRY_WORK));
+    DPL_ASSERT_OK (dpl_entry_new (&t3, ENTRY_WORK));
     DPL_ASSERT_OK (dpl_tasklist_new (&tasks));
 
     DPL_ASSERT_OK (dpl_tasklist_push(tasks, t1));

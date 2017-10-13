@@ -6,8 +6,8 @@ int test_unit_tasklist_filter_task_ref_1 (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter;
     DplTaskListIter *fiter;
-    DplTask *task;
-    DplRef *ref;
+    DplEntry *task;
+    const DplEntry *ref;
     DplTaskListFilter *filter;
     time_t begin;
     time_t end;
@@ -31,11 +31,11 @@ int test_unit_tasklist_filter_task_ref_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter, filter, &fiter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_title_get (task, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Coffee"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);
@@ -48,8 +48,7 @@ int test_unit_tasklist_filter_task_ref_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_tasklist_filter (iter, filter, &fiter));
 
     DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
-    DPL_ASSERT_OK (dpl_task_ref_get (task, &ref));
-    DPL_ASSERT_OK (dpl_ref_title_get (ref, &title));
+    DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
     DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);

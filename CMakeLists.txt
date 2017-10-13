@@ -10,12 +10,13 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions (-DYYDEBUG=1)
 endif ()
 
+add_definitions (-D_DEFAULT_SOURCE)
+
 find_package (BISON 3.0.0 REQUIRED)
 BISON_TARGET(dpl_parser src/parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.c")
 
 
-set (SOURCES src/task.c
-             src/ref.c
+set (SOURCES src/entry.c
              src/tasklist.c
              src/time.c
              src/utils.c
@@ -34,14 +35,9 @@ add_library (dayplan_static STATIC ${SOURCES})
 
 enable_testing ()
 
-set (TESTLIST test/unit/task_title
-              test/unit/task_desc
-              test/unit/task_begin
-              test/unit/task_end
-              test/unit/task_ref
-              test/unit/ref_id
-              test/unit/ref_title
-              test/unit/ref_desc
+set (TESTLIST test/unit/entry_task_1
+              test/unit/entry_work_1
+              test/unit/entry_work_2
               test/unit/tasklist_new
               test/unit/tasklist_push
               test/unit/tasklist_remove

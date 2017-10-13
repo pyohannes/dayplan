@@ -3,7 +3,7 @@
 
 int test_unit_parse_task_list_3 (int argc, char *argv[])
 {
-    DplTask *task;
+    DplEntry *task;
     DplTaskList *tasks;
     DplTaskListIter *iter, *done_iter;
     DplTaskListFilter *done;

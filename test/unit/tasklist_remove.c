@@ -6,13 +6,13 @@ int test_unit_tasklist_remove (int argc, char *argv[])
     DplTaskList *tasks;
     DplTaskListIter *iter;
     uint32_t len;
-    DplTask *t1, *t2, *t3, *t4;
-    DplTask *curr;
+    DplEntry *t1, *t2, *t3, *t4;
+    DplEntry *curr;
 
-    DPL_ASSERT_OK (dpl_task_new (&t1));
-    DPL_ASSERT_OK (dpl_task_new (&t2));
-    DPL_ASSERT_OK (dpl_task_new (&t3));
-    DPL_ASSERT_OK (dpl_task_new (&t4));
+    DPL_ASSERT_OK (dpl_entry_new (&t1, ENTRY_WORK));
+    DPL_ASSERT_OK (dpl_entry_new (&t2, ENTRY_WORK));
+    DPL_ASSERT_OK (dpl_entry_new (&t3, ENTRY_WORK));
+    DPL_ASSERT_OK (dpl_entry_new (&t4, ENTRY_WORK));
     DPL_ASSERT_OK (dpl_tasklist_new (&tasks));
 
     DPL_ASSERT_OK (dpl_tasklist_push(tasks, t1));
@@ -47,10 +47,10 @@ int test_unit_tasklist_remove (int argc, char *argv[])
 
 
     DPL_ASSERT_OK (dpl_tasklist_free (tasks, 1));
-    DPL_ASSERT_OK (dpl_task_free (t1));
-    DPL_ASSERT_OK (dpl_task_free (t2));
-    DPL_ASSERT_OK (dpl_task_free (t3));
-    DPL_ASSERT_OK (dpl_task_free (t4));
+    DPL_ASSERT_OK (dpl_entry_free (t1));
+    DPL_ASSERT_OK (dpl_entry_free (t2));
+    DPL_ASSERT_OK (dpl_entry_free (t3));
+    DPL_ASSERT_OK (dpl_entry_free (t4));
 
     return 0;
 }

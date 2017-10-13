@@ -24,14 +24,25 @@
     }
 /* Duplicate a string.
  *
- * DPL_dst is freed if it is not null. If DPL_src is null, DPL_dst is set to
- * null.
+ * Precondition
+ *   - DPL_src is 0
+ * Postcondition
+ *   - If DPL_dst is not 0, it is freed and set to 0
  *
- * If DPL_src is not null, DPL_dst is allocated to the size of DPL_dst and the 
- * contents of DPL_src are copied to DPL_dest.
+ * Precondition
+ *   - DPL_src is not 0
+ *   - memory can be allocated
+ * Postcondition
+ *   - If DPL_dst is not 0, it is freed
+ *   - DPL_dst is allocated to the size of DPL_src
+ *   - The contents of DPL_src are copied to DPL_dst
  *
- * If DPL_dst cannot be allocated, DPL_ERR_MEM is returned from the function
- * invoking the macro.
+ * Precondition
+ *   - DPL_src is not 0
+ *   - memory cannot be allocated
+ * Postcondition
+ *   - If DPL_dst is not 0, it is freed
+ *   - A return with DPL_ERR_MEM is invoked
  */
 
 
@@ -43,24 +54,33 @@
 }
 /* Forward error codes.
  *
- * If DPL_value evaluates to a value different than DPL_OK, the function
- * invoking the macro returns this value.
+ * Precondition
+ *   - DPL_value resolves to DPL_OK
+ * Postcondition
+ *   - Program flow continues.
+ *
+ * Precondition
+ *   - DPL_value does not resolve to DPL_OK
+ * Postcondition
+ *   - return is invoked with the value DPL_value resolves to
  */
 
 
 char *dpl_skip_whitespaces (char *s);
 /* Strip trailing and leading whitespace characters from a string.
  *
- * The return value is a substring of s. It begins at the first
- * character of s that is not a whitespace character, it ends at
- * the last character of s that is not a whitespace character.
+ * Precondition
+ *   - s is 0
+ * Postcondition
+ *   - 0 is returned
  *
- * The return value points into s. s can be altered during
- * this call.
- *
- * If s is 0, 0 is returned.
- *
- * Whitespace characters are line breaks, blanks and tabs.
+ * Precondition
+ *   - s is an allocated string
+ * Postcondition
+ *   - the return value points to the first position in s that does not contain
+ *   a whitespace character (a line break, blank or tab)
+ *   - s is truncated to end at the last character of s that is not a
+ *   whitespace character
  */
 
 
