@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include "dpl/dpl.h"
 #include "dpl/utils.h"
 
@@ -460,6 +461,9 @@ int parse_arguments (int argc, char *argv[])
             case 'b':
                 PARSE_DATE
                 options.tm_from = mktime (&tm);
+                if (!options.tm_to) {
+                    options.tm_to = LONG_MAX;
+                }
                 break;
             case 'c':
                 PARSE_DATE

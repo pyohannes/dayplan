@@ -30,7 +30,7 @@ def assert_dpl_cmd_error(cmd, content):
 
 
 def assert_dpl_cmd_ok(cmd, content, expected):
-    ret, out, err = dpl_run(cmd, content, valgrind=True)
+    ret, out, err = dpl_run(cmd, content, valgrind=False)
     print(ret, "\n", out, "\n", err, "\n", expected)
     assert out.strip() == expected.strip()
     assert ret == 0
