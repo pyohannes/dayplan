@@ -285,9 +285,13 @@ whitespaces : whitespace
             | whitespaces whitespace
             ;
 
-paddednewline : NEWLINE
-              | whitespaces NEWLINE
+paddednewline : NEWLINE emptylines
+              | whitespaces NEWLINE emptylines
               ;
+
+emptylines : NEWLINE emptylines
+           |
+           ;
 
 refid : HASH number whitespace { $$ = $2; }
       ;

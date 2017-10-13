@@ -51,6 +51,7 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/parse_task_single_1
               test/unit/parse_task_single_2
               test/unit/parse_task_single_paddings
+              test/unit/parse_date_space_1
               test/unit/parse_error_indent_1
               test/unit/parse_error_indent_2
               test/unit/parse_task_list_1
