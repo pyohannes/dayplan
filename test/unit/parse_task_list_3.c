@@ -4,9 +4,8 @@
 int test_unit_parse_task_list_3 (int argc, char *argv[])
 {
     DplEntry *task;
-    DplTaskList *tasks;
-    DplTaskListIter *iter, *done_iter;
-    DplTaskListFilter *done;
+    DplList *tasks;
+    DplIter *iter, *done_iter;
     uint32_t len;
 
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN,
@@ -16,19 +15,17 @@ int test_unit_parse_task_list_3 (int argc, char *argv[])
 
     DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
-    DPL_ASSERT_OK (dpl_tasklist_len (tasks, &len));
+    DPL_ASSERT_OK (dpl_list_len (tasks, &len));
     DPL_ASSERT_EQ (len, 1);
 
-    DPL_ASSERT_OK (dpl_tasklist_filter_done (&done));
-    DPL_ASSERT_OK (dpl_tasklist_iter (tasks, &iter));
-    DPL_ASSERT_OK (dpl_tasklist_filter (iter, done, &done_iter));
+    DPL_ASSERT_OK (dpl_list_iter (tasks, &iter));
+    DPL_ASSERT_OK (dpl_filter_done (iter, 1, &done_iter));
 
-    DPL_ASSERT_EQ (dpl_tasklistiter_next (done_iter, &task), DPL_ITER_END);
+    DPL_ASSERT_EQ (dpl_iter_next (done_iter, &task), DPL_ITER_END);
 
-    DPL_ASSERT_OK (dpl_tasklist_filter_free (done));
-    DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
-    DPL_ASSERT_OK (dpl_tasklistiter_free (done_iter));
-    DPL_ASSERT_OK (dpl_tasklist_free (tasks, 1));
+    DPL_ASSERT_OK (dpl_iter_free (iter));
+    DPL_ASSERT_OK (dpl_iter_free (done_iter));
+    DPL_ASSERT_OK (dpl_list_free (tasks, 1));
     remove (DPL_tmpfile);
 
     return 0;

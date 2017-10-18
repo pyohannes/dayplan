@@ -6,7 +6,7 @@
 #include "dpl/defs.h"
 #include "dpl/utils.h"
 
-static DplTaskList *tasks;
+static DplList *tasks;
 static DplEntry *current;
 static time_t daytime;
 
@@ -42,20 +42,19 @@ static int yystrict;
 }
 
 
-static int dpl_parse_end_set (DplTaskList *tasks)
+static int dpl_parse_end_set (DplList *tasks)
 {
-    DplTaskListIter *iter;
-    DplTaskListFilter *taskfilter;
+    DplIter *iter;
     DplEntry *curr, *next;
     const char *title;
 
-    DPL_FORWARD_ERROR (dpl_tasklist_iter (tasks, &iter));
-    if (dpl_tasklistiter_next (iter, &curr) != DPL_OK) {
+    DPL_FORWARD_ERROR (dpl_list_iter (tasks, &iter));
+    if (dpl_iter_next (iter, &curr) != DPL_OK) {
         /* empty task list */
         return DPL_OK;
     }
 
-    while (dpl_tasklistiter_next (iter, &next) == DPL_OK) {
+    while (dpl_iter_next (iter, &next) == DPL_OK) {
         time_t begin;
         DplEntryType type;
         DPL_FORWARD_ERROR (dpl_entry_type_get (curr, &type));
@@ -74,15 +73,15 @@ static int dpl_parse_end_set (DplTaskList *tasks)
         return DPL_ERR_INPUT;
     }
 
-    DPL_FORWARD_ERROR (dpl_tasklistiter_free (iter));
-    DPL_FORWARD_ERROR (dpl_tasklist_iter (tasks, &iter));
+    DPL_FORWARD_ERROR (dpl_iter_free (iter));
+    DPL_FORWARD_ERROR (dpl_list_iter (tasks, &iter));
 
-    while (dpl_tasklistiter_next (iter, &curr) == DPL_OK) {
+    while (dpl_iter_next (iter, &curr) == DPL_OK) {
         const char *title;
         DPL_FORWARD_ERROR (dpl_entry_name_get (curr, &title));
 
         if (!title) {
-            DPL_FORWARD_ERROR (dpl_tasklist_remove (tasks, curr));
+            DPL_FORWARD_ERROR (dpl_list_remove (tasks, curr));
         }
     }
     return DPL_OK;
@@ -106,7 +105,7 @@ static int dpl_parse_copy_open_refs ()
             DPL_FORWARD_ERROR (dpl_entry_begin_set (task, daytime));
             DPL_FORWARD_ERROR (dpl_entry_name_set (task, title));
             DPL_FORWARD_ERROR (dpl_entry_task_id_set (task, r->id));
-            DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, task));
+            DPL_FORWARD_ERROR (dpl_list_push (tasks, task));
         }
         r = r->next;
     }
@@ -240,23 +239,23 @@ ref : refid text NEWLINE itembody
         DPL_FORWARD_ERROR (dpl_parse_new_task (0, &current, 1));
         DPL_FORWARD_ERROR (dpl_entry_task_id_set (current, $1));
         DPL_FORWARD_ERROR (dpl_parse_add_reference ($1, current));
-        DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, current));
+        DPL_FORWARD_ERROR (dpl_list_push (tasks, current));
     }
     
 item : time whitespace text NEWLINE itembody
      {
         DPL_FORWARD_ERROR (dpl_parse_new_task ($1, &current, 0));
-        DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, current));
+        DPL_FORWARD_ERROR (dpl_list_push (tasks, current));
      }
      | time NEWLINE
      {
         DPL_FORWARD_ERROR (dpl_parse_new_task ($1, &current, 0));
-        DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, current));
+        DPL_FORWARD_ERROR (dpl_list_push (tasks, current));
      }
      | time whitespace NEWLINE
      {
         DPL_FORWARD_ERROR (dpl_parse_new_task ($1, &current, 0));
-        DPL_FORWARD_ERROR (dpl_tasklist_push (tasks, current));
+        DPL_FORWARD_ERROR (dpl_list_push (tasks, current));
      }
      ;
 
@@ -496,7 +495,7 @@ int yywarning (char *s)
 }
 
 
-int dpl_parse (const char *filename, DplTaskList **list, int strict)
+int dpl_parse (const char *filename, DplList **list, int strict)
 {
     int ret = DPL_OK;
 
@@ -526,7 +525,7 @@ int dpl_parse (const char *filename, DplTaskList **list, int strict)
         return DPL_ERR_IO;
     }
 
-    if ((ret = dpl_tasklist_new (&tasks)) != DPL_OK) {
+    if ((ret = dpl_list_new (&tasks)) != DPL_OK) {
         fclose (yyin);
         return ret;
     }

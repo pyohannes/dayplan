@@ -17,7 +17,7 @@ BISON_TARGET(dpl_parser src/parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.c")
 
 
 set (SOURCES src/entry.c
-             src/tasklist.c
+             src/list.c
              src/time.c
              src/utils.c
              src/acc.c
@@ -38,15 +38,13 @@ enable_testing ()
 set (TESTLIST test/unit/entry_task_1
               test/unit/entry_work_1
               test/unit/entry_work_2
-              test/unit/tasklist_new
-              test/unit/tasklist_push
-              test/unit/tasklist_remove
-              test/unit/tasklist_filter_period_1
-              test/unit/tasklist_filter_today_1
-              test/unit/tasklist_filter_today_2
-              test/unit/tasklist_filter_task_ref_1
-              test/unit/tasklist_filter_task_ref_2
-              test/unit/tasklist_filter_ref_done_1
+              test/unit/list_new
+              test/unit/list_push
+              test/unit/list_remove
+              test/unit/list_filter_period_1
+              test/unit/list_filter_task_ref_1
+              test/unit/list_filter_task_ref_2
+              test/unit/list_filter_ref_done_1
               test/unit/parse_empty
               test/unit/parse_task_single_1
               test/unit/parse_task_single_2

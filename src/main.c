@@ -209,42 +209,29 @@ int print_task (DplEntry *task, int print_time_info, int refinfo)
 }
 
 
-int print_sums (DplTaskList *tasks)
+int print_sums (DplList *tasks)
 {
     DplGroup *first;
-    DplTaskListIter *iter_full, *iter_tasks, *iter;
-    DplTaskListFilter *ftoday, *fref;
+    DplIter *iter_full, *iter_tasks, *iter;
     int ret;
 
-    ret = dpl_tasklist_iter (tasks, &iter_full);
+    ret = dpl_list_iter (tasks, &iter_full);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
         return ret;
     }
 
-    ret = dpl_tasklist_filter_tasks (&fref);
+    ret = dpl_filter_type (iter_full, ENTRY_WORK, &iter_tasks);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain reference filter.\n");
         return ret;
     }
 
-    ret = dpl_tasklist_filter (iter_full, fref, &iter_tasks);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot apply reference filter.\n");
-        return ret;
-    }
-
     if (options.tm_from || options.tm_to) {
-        ret = dpl_tasklist_filter_period (options.tm_from, options.tm_to, 
-                &ftoday);
+        ret = dpl_filter_period (iter_tasks, options.tm_from, options.tm_to, 
+                &iter);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-    
-        ret = dpl_tasklist_filter (iter_tasks, ftoday, &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot assign task list filter.\n");
             return ret;
         }
     } else {
@@ -260,7 +247,7 @@ int print_sums (DplTaskList *tasks)
 
     while (first) {
         time_t durance;
-        DplTaskListIter *iter;
+        DplIter *iter;
         char sdurance[1024];
         const char *name;
 
@@ -278,42 +265,29 @@ int print_sums (DplTaskList *tasks)
 }
 
 
-int print_ref_list (DplTaskList *tasks, int done, 
+int print_ref_list (DplList *tasks, int done, 
         int undone)
 {
-    DplTaskListIter *iter_full, *iter_refs, *iter_done, *iter_undone, *iter;
-    DplTaskListFilter *ftoday, *fref, *fundone, *fdone;
+    DplIter *iter_full, *iter_refs, *iter_done, *iter_undone, *iter;
     DplEntry *task;
     int ret;
 
-    ret = dpl_tasklist_iter (tasks, &iter_full);
+    ret = dpl_list_iter (tasks, &iter_full);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
         return ret;
     }
 
-    ret = dpl_tasklist_filter_refs (&fref);
+    ret = dpl_filter_type (iter_full, ENTRY_TASK, &iter_refs);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain reference filter.\n");
         return ret;
     }
 
-    ret = dpl_tasklist_filter (iter_full, fref, &iter_refs);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot apply reference filter.\n");
-        return ret;
-    }
-
     if (done) {
-        ret = dpl_tasklist_filter_done (&fdone);
+        ret = dpl_filter_done (iter_refs, 1, &iter_done);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate done filter.\n");
-            return ret;
-        }
-    
-        ret = dpl_tasklist_filter (iter_refs, fdone, &iter_done);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot assign done filter.\n");
             return ret;
         }
     } else {
@@ -321,15 +295,9 @@ int print_ref_list (DplTaskList *tasks, int done,
     }
 
     if (undone) {
-        ret = dpl_tasklist_filter_undone (&fundone);
+        ret = dpl_filter_done (iter_done, 0, &iter_undone);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate undone filter.\n");
-            return ret;
-        }
-    
-        ret = dpl_tasklist_filter (iter_done, fundone, &iter_undone);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot assign undone filter.\n");
             return ret;
         }
     } else {
@@ -337,16 +305,10 @@ int print_ref_list (DplTaskList *tasks, int done,
     }
 
     if (options.tm_from || options.tm_to) {
-        ret = dpl_tasklist_filter_period (options.tm_from, options.tm_to, 
-                &ftoday);
+        ret = dpl_filter_period (iter_undone, options.tm_from, options.tm_to, 
+                &iter);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-    
-        ret = dpl_tasklist_filter (iter_undone, ftoday, &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot assign task list filter.\n");
             return ret;
         }
     } else {
@@ -354,7 +316,7 @@ int print_ref_list (DplTaskList *tasks, int done,
         iter = iter_undone;
     }
 
-    while ((ret = dpl_tasklistiter_next (iter, &task)) == DPL_OK) {
+    while ((ret = dpl_iter_next (iter, &task)) == DPL_OK) {
         DPL_FORWARD_ERROR (print_task (task, 0, 1));
     }
 
@@ -362,42 +324,29 @@ int print_ref_list (DplTaskList *tasks, int done,
 }
 
 
-int print_task_list (DplTaskList *tasks)
+int print_task_list (DplList *tasks)
 {
-    DplTaskListIter *iter_full, *iter_tasks, *iter;
-    DplTaskListFilter *ftoday, *ftasks;
+    DplIter *iter_full, *iter_tasks, *iter;
     DplEntry *task;
     int ret;
 
-    ret = dpl_tasklist_iter (tasks, &iter_full);
+    ret = dpl_list_iter (tasks, &iter_full);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
         return ret;
     }
 
-    ret = dpl_tasklist_filter_tasks (&ftasks);
+    ret = dpl_filter_type (iter_full, ENTRY_WORK, &iter_tasks);
     if (ret != DPL_OK) {
         fprintf (stderr, "Error: Cannot obtain task filter.\n");
         return ret;
     }
 
-    ret = dpl_tasklist_filter (iter_full, ftasks, &iter_tasks);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot apply task filter.\n");
-        return ret;
-    }
-
     if (options.tm_from || options.tm_to) {
-        ret = dpl_tasklist_filter_period (options.tm_from, options.tm_to, 
-                &ftoday);
+        ret = dpl_filter_period (iter_tasks, options.tm_from, options.tm_to, 
+                &iter);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-    
-        ret = dpl_tasklist_filter (iter_tasks, ftoday, &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot assign task list filter.\n");
             return ret;
         }
     } else {
@@ -405,7 +354,7 @@ int print_task_list (DplTaskList *tasks)
         iter = iter_tasks;
     }
 
-    while ((ret = dpl_tasklistiter_next (iter, &task)) == DPL_OK) {
+    while ((ret = dpl_iter_next (iter, &task)) == DPL_OK) {
         print_task (task, 1, 1);
     }
 
@@ -510,7 +459,7 @@ int parse_arguments (int argc, char *argv[])
 int main (int argc, char *argv[])
 {
     int ret;
-    DplTaskList *tasks;
+    DplList *tasks;
 
     if (!isatty (1)) {
         COLORS[0] = "";
@@ -563,7 +512,7 @@ int main (int argc, char *argv[])
         optind += 1;
     }
 
-    dpl_tasklist_free (tasks, 1);
+    dpl_list_free (tasks, 1);
 
     return 0;
 }

@@ -1,13 +1,12 @@
 #include "dpl_test.h"
 
 
-int test_unit_tasklist_filter_period_1 (int argc, char *argv[])
+int test_unit_list_filter_period_1 (int argc, char *argv[])
 {
-    DplTaskList *tasks;
-    DplTaskListIter *iter;
-    DplTaskListIter *fiter;
+    DplList *tasks;
+    DplIter *iter;
+    DplIter *fiter;
     DplEntry *task;
-    DplTaskListFilter *period;
     time_t begin;
     time_t end;
     const char *title;
@@ -33,54 +32,50 @@ int test_unit_tasklist_filter_period_1 (int argc, char *argv[])
 
     DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
-    DPL_ASSERT_OK (dpl_tasklist_len (tasks, &len));
+    DPL_ASSERT_OK (dpl_list_len (tasks, &len));
     DPL_ASSERT_EQ (len, 5);
 
     begin = mktime (&tm);
     tm.tm_mday += 1;
     end = mktime (&tm);
-    DPL_ASSERT_OK (dpl_tasklist_filter_period (begin, end, &period));
-    DPL_ASSERT_OK (dpl_tasklist_iter (tasks, &iter));
-    DPL_ASSERT_OK (dpl_tasklist_filter (iter, period, &fiter));
+    DPL_ASSERT_OK (dpl_list_iter (tasks, &iter));
+    DPL_ASSERT_OK (dpl_filter_period (iter, begin, end, &fiter));
 
-    DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
+    DPL_ASSERT_OK (dpl_iter_next (fiter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
-    DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
+    DPL_ASSERT_OK (dpl_iter_next (fiter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Lunch"), 0);
 
-    DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
+    DPL_ASSERT_OK (dpl_iter_next (fiter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Planning"), 0);
 
-    DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);
-    DPL_ASSERT_OK (dpl_tasklistiter_free (fiter));
-    DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
-    DPL_ASSERT_OK (dpl_tasklist_filter_free (period));
+    DPL_ASSERT_EQ (dpl_iter_next (fiter, &task), DPL_ITER_END);
+    DPL_ASSERT_OK (dpl_iter_free (fiter));
+    DPL_ASSERT_OK (dpl_iter_free (iter));
 
     begin = end;
     tm.tm_mday += 1;
     end = mktime (&tm);
-    DPL_ASSERT_OK (dpl_tasklist_filter_period (begin, end, &period));
-    DPL_ASSERT_OK (dpl_tasklist_iter (tasks, &iter));
-    DPL_ASSERT_OK (dpl_tasklist_filter (iter, period, &fiter));
+    DPL_ASSERT_OK (dpl_list_iter (tasks, &iter));
+    DPL_ASSERT_OK (dpl_filter_period (iter, begin, end, &fiter));
 
-    DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
+    DPL_ASSERT_OK (dpl_iter_next (fiter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
 
-    DPL_ASSERT_OK (dpl_tasklistiter_next (fiter, &task));
+    DPL_ASSERT_OK (dpl_iter_next (fiter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Coffee"), 0);
 
-    DPL_ASSERT_EQ (dpl_tasklistiter_next (fiter, &task), DPL_ITER_END);
-    DPL_ASSERT_OK (dpl_tasklistiter_free (fiter));
-    DPL_ASSERT_OK (dpl_tasklistiter_free (iter));
-    DPL_ASSERT_OK (dpl_tasklist_filter_free (period));
+    DPL_ASSERT_EQ (dpl_iter_next (fiter, &task), DPL_ITER_END);
+    DPL_ASSERT_OK (dpl_iter_free (fiter));
+    DPL_ASSERT_OK (dpl_iter_free (iter));
 
-    DPL_ASSERT_OK (dpl_tasklist_free (tasks, 1));
+    DPL_ASSERT_OK (dpl_list_free (tasks, 1));
     remove (DPL_tmpfile);
 
     return 0;

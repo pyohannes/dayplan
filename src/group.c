@@ -12,7 +12,7 @@ struct DplGroup_
 {
     DplGroup *next;
     char *name;
-    DplTaskList *tasks;
+    DplList *tasks;
 };
 
 
@@ -64,9 +64,9 @@ int dpl_group_name_get (const DplGroup *group, const char **name)
 }
 
 
-int dpl_group_tasks_get (const DplGroup *group, DplTaskListIter **iter)
+int dpl_group_tasks_get (const DplGroup *group, DplIter **iter)
 {
-    return dpl_tasklist_iter (group->tasks, iter);
+    return dpl_list_iter (group->tasks, iter);
 }
 
 
@@ -118,15 +118,15 @@ static int _dpl_group_add_for_name (const char *name, DplEntry *task,
     }
 
     if (!found->tasks) {
-        DPL_FORWARD_ERROR (dpl_tasklist_new (&found->tasks));
+        DPL_FORWARD_ERROR (dpl_list_new (&found->tasks));
     }
-    DPL_FORWARD_ERROR (dpl_tasklist_push (found->tasks, task));
+    DPL_FORWARD_ERROR (dpl_list_push (found->tasks, task));
 
     return DPL_OK;
 }
 
 
-int dpl_group_by_title (DplTaskListIter *iter, DplGroup **first)
+int dpl_group_by_title (DplIter *iter, DplGroup **first)
 {
     DplEntry *task;
     const char *title;
@@ -135,7 +135,7 @@ int dpl_group_by_title (DplTaskListIter *iter, DplGroup **first)
 
     *first = 0;
 
-    while (dpl_tasklistiter_next (iter, &task) == DPL_OK) {
+    while (dpl_iter_next (iter, &task) == DPL_OK) {
         int pos;
 
         DPL_FORWARD_ERROR (dpl_entry_name_get (task, &title));
@@ -168,7 +168,7 @@ int dpl_group_by_title (DplTaskListIter *iter, DplGroup **first)
 }
 
 
-int dpl_group_by_day (DplTaskListIter *iter, DplGroup **first)
+int dpl_group_by_day (DplIter *iter, DplGroup **first)
 {
     DplEntry *task;
     time_t begin;
@@ -177,7 +177,7 @@ int dpl_group_by_day (DplTaskListIter *iter, DplGroup **first)
 
     *first = 0;
 
-    while (dpl_tasklistiter_next (iter, &task) == DPL_OK) {
+    while (dpl_iter_next (iter, &task) == DPL_OK) {
         DPL_FORWARD_ERROR (dpl_entry_begin_get (task, &begin));
         localtime_r (&begin, &tm_begin);
         if (strftime (date, 16, "%Y-%m-%d", &tm_begin) < 10) {
