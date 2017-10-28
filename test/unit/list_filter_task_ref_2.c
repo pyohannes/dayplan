@@ -16,7 +16,11 @@ int test_unit_list_filter_task_ref_2 (int argc, char *argv[])
     tm.tm_mday = 11;
     tm.tm_mon = 8;
     tm.tm_year = 117;
+<<<<<<< HEAD
     tm.tm_isdst = 1;
+=======
+    tm.tm_isdst = daylight;
+>>>>>>> Document and refactor the parser module.
 
     time_t begin = mktime (&tm);
     time_t end = begin + 3600;
@@ -35,12 +39,20 @@ int test_unit_list_filter_task_ref_2 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_list_len (tasks, &len));
+<<<<<<< HEAD
     DPL_ASSERT_EQ (len, 6);
+=======
+    DPL_ASSERT_EQ (len, 5);
+>>>>>>> Document and refactor the parser module.
 
     DPL_ASSERT_OK (dpl_list_iter (tasks, &iter_all));
     DPL_ASSERT_OK (dpl_filter_type (iter_all, ENTRY_TASK, &iter_ref));
 
+<<<<<<< HEAD
     DPL_ASSERT_OK (dpl_filter_period (iter_ref, begin, end, &iter));
+=======
+    DPL_ASSERT_OK (dpl_filter_period (iter_ref, 0, end, &iter));
+>>>>>>> Document and refactor the parser module.
 
     DPL_ASSERT_OK (dpl_iter_next (iter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));

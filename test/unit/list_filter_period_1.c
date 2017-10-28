@@ -6,7 +6,7 @@ int test_unit_list_filter_period_1 (int argc, char *argv[])
     DplList *tasks;
     DplIter *iter;
     DplIter *fiter;
-    DplEntry *task;
+    const DplEntry *task;
     time_t begin;
     time_t end;
     const char *title;

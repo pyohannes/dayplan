@@ -10,7 +10,7 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions (-DYYDEBUG=1)
 endif ()
 
-add_definitions (-D_DEFAULT_SOURCE)
+add_definitions (-D_DEFAULT_SOURCE -D_XOPEN_SOURCE)
 
 find_package (BISON 3.0.0 REQUIRED)
 BISON_TARGET(dpl_parser src/parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.c")
@@ -22,6 +22,7 @@ set (SOURCES src/entry.c
              src/utils.c
              src/acc.c
              src/group.c
+             src/error.c
              ${BISON_dpl_parser_OUTPUTS}
 )
 
@@ -41,6 +42,7 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/list_new
               test/unit/list_push
               test/unit/list_remove
+              test/unit/list_remove_2
               test/unit/list_filter_period_1
               test/unit/list_filter_task_ref_1
               test/unit/list_filter_task_ref_2
@@ -49,9 +51,6 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/parse_task_single_1
               test/unit/parse_task_single_2
               test/unit/parse_task_single_paddings
-              test/unit/parse_date_space_1
-              test/unit/parse_error_indent_1
-              test/unit/parse_error_indent_2
               test/unit/parse_task_list_1
               test/unit/parse_task_list_2
               test/unit/parse_task_list_3

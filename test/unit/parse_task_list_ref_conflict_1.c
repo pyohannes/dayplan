@@ -15,7 +15,7 @@ int test_unit_parse_task_list_ref_conflict_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_OK (dpl_list_free (tasks, 1));
 
-    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks, 1), DPL_ERR_SYNTAX);
+    DPL_ASSERT_EQ (dpl_parse (DPL_tmpfile, &tasks, 1), DPL_ERR_INPUT);
 
     remove (DPL_tmpfile);
 

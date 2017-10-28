@@ -305,8 +305,8 @@ int print_ref_list (DplList *tasks, int done,
     }
 
     if (options.tm_from || options.tm_to) {
-        ret = dpl_filter_period (iter_undone, options.tm_from, options.tm_to, 
-                &iter);
+        ret = dpl_filter_period (iter_undone, done ? options.tm_from : 0, 
+                options.tm_to, &iter);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
             return ret;
@@ -383,7 +383,6 @@ int parse_arguments (int argc, char *argv[])
 #define PARSE_DATE { \
     time_t now = time (0); \
     int ret; \
-    localtime_r (&now, &tm); \
     ret = sscanf (optarg, "%u-%u-%u", &tm.tm_year, &tm.tm_mon, &tm.tm_mday); \
     if (ret != 3) { \
         fprintf (stderr, "Error: Invalid date format: %s\n", optarg); \
@@ -392,6 +391,7 @@ int parse_arguments (int argc, char *argv[])
     tm.tm_mon -= 1; \
     tm.tm_year -= 1900; \
     tm.tm_sec = tm.tm_min = tm.tm_hour = 0; \
+    tm.tm_isdst = daylight; \
 }
 
     while ((c = getopt_long (argc, argv, "thosrad:b:c:f:g", long_options, 
@@ -404,6 +404,7 @@ int parse_arguments (int argc, char *argv[])
                 options.tm_from = time (0);
                 localtime_r (&options.tm_from, &tm);
                 tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+                tm.tm_isdst = daylight;
                 options.tm_from = mktime (&tm);
                 options.tm_to = options.tm_from + (3600 * 24) - 1;
                 break;

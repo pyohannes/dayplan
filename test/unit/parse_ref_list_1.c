@@ -20,6 +20,9 @@ int test_unit_parse_ref_list_1 (int argc, char *argv[])
     tm.tm_mon = 8;
     tm.tm_year = 117;
 
+    tzset ();
+    tm.tm_isdst = daylight;
+
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN,
                 "2017-09-11\n"
                 "  #1     Projects/Dayplan\n"

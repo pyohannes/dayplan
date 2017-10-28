@@ -19,6 +19,9 @@ int test_unit_parse_task_single_paddings (int argc, char *argv[])
     tm_begin.tm_mon = 8;
     tm_begin.tm_year = 117;
 
+    tzset ();
+    tm_begin.tm_isdst = daylight;
+
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN,
                 "2017-09-11 \n"
                 "  08:00     Projects/Dayplan \n"

@@ -38,3 +38,11 @@ Durance: 1h  0m
     In this way paragraphs can be supported.
 
 """)
+
+
+def test_work_missing_endmarker():
+    assert_dpl_cmd_error(["work"],
+"""2017-09-09
+    08:00 Work item 1
+    09:00 Work item 2
+""")

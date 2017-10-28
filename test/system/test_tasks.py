@@ -1,7 +1,7 @@
 from dpltest import assert_dpl_cmd_error, assert_dpl_cmd_ok
 
 
-def test_ref_id_conflict():
+def test_task_id_conflict():
     assert_dpl_cmd_error(["tasks", "--strict"],
 """2017-09-09
     #1  Task 1
@@ -11,7 +11,23 @@ def test_ref_id_conflict():
 """)
 
 
-def test_ref_id():
+def test_task_id_invalid_1():
+    assert_dpl_cmd_error(["tasks"],
+"""2017-09-09
+    #0  Task 1
+    08:00
+""")
+
+
+def test_task_id_invalid_2():
+    assert_dpl_cmd_error(["tasks"],
+"""2017-09-09
+    #a  Task 1
+    08:00
+""")
+
+
+def test_task_id():
     assert_dpl_cmd_ok(["tasks", "--oneline"],
 """2017-09-09
     #1  Task 1

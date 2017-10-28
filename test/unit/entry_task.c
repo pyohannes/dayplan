@@ -1,7 +1,7 @@
 #include "dpl_test.h"
 
 
-int test_unit_task_ref (int argc, char *argv[])
+int test_unit_entry_task (int argc, char *argv[])
 {
     DplEntry *t;
     DplEntry *r_in;

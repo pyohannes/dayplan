@@ -177,9 +177,14 @@ int dpl_list_remove (DplList *list, const DplEntry *entry)
     struct DplListItem *curr;
     struct DplListItem *prev;
 
-    /* special case: entry is first item in the list */
+    /* special case 1: entry is first item in the list */
     if (list->first && list->first->item == entry) {
         curr = list->first->next;
+
+        if (list->first == list->last) {
+            list->last = curr;
+        }
+
         free (list->first);
         list->first = curr;
         list->len -= 1;
@@ -191,6 +196,11 @@ int dpl_list_remove (DplList *list, const DplEntry *entry)
     while (curr->next) {
         if (curr->next->item == entry) {
             struct DplListItem *newnext = curr->next->next;
+
+            if (curr->next == list->last) {
+                list->last = curr;
+            }
+
             free (curr->next);
             curr->next = newnext;
             list->len -= 1;
@@ -317,7 +327,7 @@ int dpl_filter_period (DplIter *in, time_t start, time_t end, DplIter **out)
    
     data = malloc (sizeof (struct DplFilter_Period_));
 
-    if (data) {
+    if (!data) {
         return DPL_ERR_MEM;
     }
 
