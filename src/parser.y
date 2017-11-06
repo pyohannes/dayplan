@@ -524,6 +524,7 @@ dpl_parse_link_entries_error:
 static int dpl_parse_entry_new (DplParseContext *ctx, DplEntryType type)
 {
     DPL_FORWARD_ERROR (dpl_entry_new (&ctx->current, type));
+    ctx->tm.tm_isdst = -1;
     DPL_FORWARD_ERROR (dpl_entry_begin_set (ctx->current, mktime (&ctx->tm)));
     if (ctx->textpos) {
         DPL_ADD_CHAR(ctx, 0);
@@ -642,7 +643,7 @@ date : number HYPHEN number HYPHEN number
         ctx->tm.tm_mday = $5;
         ctx->tm.tm_mon = $3 - 1;
         ctx->tm.tm_year = $1 - 1900;
-        ctx->tm.tm_isdst = daylight;
+        ctx->tm.tm_isdst = -1;
      }
      ;
 

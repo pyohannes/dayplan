@@ -46,3 +46,20 @@ def test_work_missing_endmarker():
     08:00 Work item 1
     09:00 Work item 2
 """)
+
+
+def test_work_daylight_saving_time():
+    assert_dpl_cmd_ok(["work", "--oneline"],
+"""2017-10-15
+    08:00 Work item
+    09:00
+
+2017-11-15
+    08:00 Work item
+    09:00
+""",
+"""Sun Oct 15 08:00:00 2017  1h  0m  Work item
+Wed Nov 15 08:00:00 2017  1h  0m  Work item
+""")
+
+

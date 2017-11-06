@@ -12,7 +12,7 @@ int test_unit_parse_task_list_end_1 (int argc, char *argv[])
     struct tm tm = { 0, 0, 8, 11, 8, 117, 0, 0, 1 };
 
     tzset ();
-    tm.tm_isdst = daylight;
+    tm.tm_isdst = -1;
 
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN,
                 "2017-09-11\n"

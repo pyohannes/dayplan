@@ -105,7 +105,12 @@ int print_task (DplEntry *task, int print_time_info, int refinfo)
         return ret;
     } 
 
-    if (!ctime_r (&begin, sbegin)) {
+    struct tm tmbegin;
+    if (!localtime_r (&begin, &tmbegin)) {
+        fprintf (stderr, "Error: Cannot convert time value: %ld.\n", begin);
+    }
+
+    if (!asctime_r (&tmbegin, sbegin)) {
         fprintf (stderr, "Error: Cannot convert time value: %ld.\n", begin);
         return ret;
     } 
@@ -155,23 +160,23 @@ int print_task (DplEntry *task, int print_time_info, int refinfo)
                     COLOR_DEFAULT, sdurance);
         }
         if (refinfo) {
-            printf ("%s(%s) %s#%d%s ", 
-                    done ? COLOR_CYAN : COLOR_RED,
-                    done ? "done" : "open",
-                    COLOR_GREY,
-                    refid,
-                    COLOR_DEFAULT);
-        }
-        printf ("%s\n", title ? title : "");
-    } else {
-        if (refinfo) {
-            printf ("%sId:      #%d%s\n", 
-                    COLOR_GREY,
-                    refid,
-                    COLOR_DEFAULT);
-        }
-        if (print_time_info) {
-            printf ("%sDate:    %s%s\n", COLOR_YELLOW, sbegin, 
+                printf ("%s(%s) %s#%d%s ", 
+                        done ? COLOR_CYAN : COLOR_RED,
+                        done ? "done" : "open",
+                        COLOR_GREY,
+                        refid,
+                        COLOR_DEFAULT);
+            }
+            printf ("%s\n", title ? title : "");
+        } else {
+            if (refinfo) {
+                printf ("%sId:      #%d%s\n", 
+                        COLOR_GREY,
+                        refid,
+                        COLOR_DEFAULT);
+            }
+            if (print_time_info) {
+                printf ("%sDate:    %s%s\n", COLOR_YELLOW, sbegin, 
                     COLOR_DEFAULT);
             printf ("Durance: %s\n", sdurance);
         }
