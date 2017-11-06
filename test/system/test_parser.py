@@ -26,6 +26,8 @@ def test_desc_indent():
 """Id:      #1
 Status:  open
 
+    Task 1
+
     Task name
         - 1
         - 2

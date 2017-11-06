@@ -851,7 +851,14 @@ static int yylex (DplParseContext *ctx)
 
         while (ctx->c == ' ' || ctx->c == '\t') {
             new_indent += 1;
+
             ctx->c = fgetc (ctx->file);
+
+            /* Ignore whitespaces after the second indendation level is 
+             * reached. */
+            if (ctx->indent2 && new_indent == (ctx->indent1 + ctx->indent2)) {
+                break;
+            }
         }
 
         if (ctx->c == '\n') {
