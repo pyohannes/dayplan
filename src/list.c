@@ -30,6 +30,43 @@ struct DplList_
 };
 
 
+static int dpl_list_contains (const DplList *l, const DplEntry *entry, 
+        int *contains)
+/* Test if a list contains an entry object. It is not tested for equality, but 
+ * for identity.
+ *
+ * Preconditions
+ *   - list is allocated
+ *
+ * DPL_OK
+ *   Preconditions
+ *     - The list contains entry.
+ *   Postconditions
+ *     - *contains is set to 1
+ *
+ * DPL_OK
+ *   Preconditions
+ *     - The list does not contain entry.
+ *   Postconditions
+ *     - *contains is set to 0
+ */
+{
+    struct DplListItem *pos = l->first;
+
+    *contains = 0;
+
+    while (pos) {
+        if (pos->item == entry) {
+            *contains = 1;
+            break;
+        }
+        pos = pos->next;
+    }
+
+    return DPL_OK;
+}
+
+
 int dpl_iter_free (DplIter *iter)
 {
     if (iter->free_data) {
@@ -337,6 +374,79 @@ int dpl_filter_period (DplIter *in, time_t start, time_t end, DplIter **out)
     DPL_FORWARD_ERROR (dpl_iter_new (out));
     (*out)->data = (void *)data;
     (*out)->next_func = dpl_filter_period_next_;
+    (*out)->free_data = 1;
+    (*out)->source = in;
+
+    return DPL_OK;
+}
+
+
+int dpl_filter_task_for_work_next_ (struct DplIter_ *iter, 
+        const DplEntry **next)
+{
+    const DplEntry *entry;
+    int ret;
+
+    while ((ret = dpl_iter_next (iter->source, &entry)) == DPL_OK) {
+        DPL_FORWARD_ERROR (dpl_entry_work_task_get (entry, next));
+
+        if (*next) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+
+int dpl_filter_task_for_work (DplIter *in, DplIter **out)
+{
+    DPL_FORWARD_ERROR (dpl_iter_new (out));
+    (*out)->next_func = dpl_filter_task_for_work_next_;
+    (*out)->free_data = 0;
+    (*out)->source = in;
+
+    return DPL_OK;
+}
+
+
+int dpl_filter_unique_next_ (struct DplIter_ *iter, const DplEntry **next)
+{
+    DplList *returned = (DplList *)iter->data;
+    int ret, contains;
+
+    while ((ret = dpl_iter_next (iter->source, next)) == DPL_OK) {
+
+        DPL_FORWARD_ERROR (dpl_list_contains (returned, *next, &contains));
+
+        if (contains) {
+            continue;
+        }
+
+        DPL_FORWARD_ERROR (dpl_list_push (returned, *next));
+
+        return DPL_OK;
+
+    }
+
+    return ret;
+}
+
+
+int dpl_filter_unique (DplIter *in, DplIter **out)
+{
+    DplList *returned;
+    int ret;
+
+    DPL_FORWARD_ERROR (dpl_list_new (&returned));
+
+    if ((ret = dpl_iter_new (out)) != DPL_OK) {
+        dpl_list_free (returned, 0);
+        return ret;
+    }
+
+    (*out)->data = (void *)returned;
+    (*out)->next_func = dpl_filter_unique_next_;
     (*out)->free_data = 1;
     (*out)->source = in;
 

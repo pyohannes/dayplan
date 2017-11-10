@@ -273,7 +273,7 @@ int print_sums (DplList *tasks)
 int print_ref_list (DplList *tasks, int done, 
         int undone)
 {
-    DplIter *iter_full, *iter_refs, *iter_done, *iter_undone, *iter;
+    DplIter *iter_full, *iter_period, *iter;
     DplEntry *task;
     int ret;
 
@@ -283,42 +283,56 @@ int print_ref_list (DplList *tasks, int done,
         return ret;
     }
 
-    ret = dpl_filter_type (iter_full, ENTRY_TASK, &iter_refs);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain reference filter.\n");
-        return ret;
-    }
-
-    if (done) {
-        ret = dpl_filter_done (iter_refs, 1, &iter_done);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate done filter.\n");
-            return ret;
-        }
-    } else {
-        iter_done = iter_refs;
-    }
-
-    if (undone) {
-        ret = dpl_filter_done (iter_done, 0, &iter_undone);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate undone filter.\n");
-            return ret;
-        }
-    } else {
-        iter_undone = iter_done;
-    }
-
     if (options.tm_from || options.tm_to) {
-        ret = dpl_filter_period (iter_undone, done ? options.tm_from : 0, 
-                options.tm_to, &iter);
+        ret = dpl_filter_period (iter_full, done ? options.tm_from : 0, 
+                options.tm_to, &iter_period);
         if (ret != DPL_OK) {
             fprintf (stderr, "Error: Cannot allocate task list filter.\n");
             return ret;
         }
     } else {
-        /* FIXME: careful when freeing! */
-        iter = iter_undone;
+        iter_period = iter_full;
+    }
+
+    if (done) {
+        DplIter *iter_work, *iter_tasks, *iter_done;
+
+        ret = dpl_filter_type (iter_period, ENTRY_WORK, &iter_work);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
+            return ret;
+        }
+        ret = dpl_filter_task_for_work (iter_work, &iter_tasks);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
+            return ret;
+        }
+        ret = dpl_filter_done (iter_tasks, 1, &iter_done);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot allocate undone filter.\n");
+            return ret;
+        }
+        ret = dpl_filter_unique (iter_done, &iter);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
+            return ret;
+        }
+    } else if (undone) {
+        DplIter *iter_refs;
+
+        ret = dpl_filter_type (iter_period, ENTRY_TASK, &iter_refs);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot obtain reference filter.\n");
+            return ret;
+        }
+
+        ret = dpl_filter_done (iter_refs, 0, &iter);
+        if (ret != DPL_OK) {
+            fprintf (stderr, "Error: Cannot allocate undone filter.\n");
+            return ret;
+        }
+    } else {
+        iter = iter_period;
     }
 
     while ((ret = dpl_iter_next (iter, &task)) == DPL_OK) {
@@ -473,6 +487,7 @@ int main (int argc, char *argv[])
         COLORS[2] = "";
         COLORS[3] = "";
         COLORS[4] = "";
+        COLORS[5] = "";
     }
 
     ret = parse_arguments (argc, argv);

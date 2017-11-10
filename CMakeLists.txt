@@ -47,6 +47,8 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/list_filter_task_ref_1
               test/unit/list_filter_task_ref_2
               test/unit/list_filter_ref_done_1
+              test/unit/filter_task_for_work_1
+              test/unit/filter_unique_1
               test/unit/parse_empty
               test/unit/parse_task_single_1
               test/unit/parse_task_single_2

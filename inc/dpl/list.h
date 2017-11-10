@@ -29,6 +29,7 @@ int dpl_list_new (DplList **list);
  *     - Memory can not be allocated
  */
 
+
 int dpl_list_len (const DplList *list, uint32_t *len);
 /* Return the length of a list.
  *
@@ -205,6 +206,47 @@ int dpl_filter_done (DplIter *in, int done, DplIter **out);
  * DPL_ERR_MEM
  *   Precondition
  *     - iter is allocated
+ *     - Memory is not available
+ */
+
+
+int dpl_filter_task_for_work (DplIter *in, DplIter **out);
+/* Return an iterator that yields assigned tasks for work elements.
+ *
+ * Precondition
+ *   - in is allocated
+ *   - in only yields entries of type ENTRY_WORK
+ *
+ * DPL_OK
+ *   Precondition
+ *     - Memory is available
+ *   Postcondition
+ *      - *out is assigned to an iterator that returns the task
+ *      elements assigned to work entries of the iterator in
+ *      - If no task is assigned, the entry is skipped.
+ *
+ * DPL_ERR_MEM
+ *   Precondition
+ *     - Memory is not available
+ */
+
+
+int dpl_filter_unique (DplIter *in, DplIter **out);
+/* Return an iterator that remove duplicate entries.
+ *
+ * Precondition
+ *   - in is allocated
+ *
+ * DPL_OK
+ *   Precondition
+ *     - Memory is available
+ *   Postcondition
+ *      - *out is assigned to an iterator that returns the elements of the 
+ *      iterator in 
+ *      - *out does not yield duplicates of elements it already yielded
+ *
+ * DPL_ERR_MEM
+ *   Precondition
  *     - Memory is not available
  */
 

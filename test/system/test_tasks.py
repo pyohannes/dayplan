@@ -35,3 +35,18 @@ def test_task_id():
 """,
 """(open) #1 Task 1
 """)
+
+
+def test_done_oldertask():
+    assert_dpl_cmd_ok(["tasks", "--oneline", "--date-from", "2017-09-10",
+        "--date-to", "2017-09-11"],
+"""2017-09-09
+    #1  Task 1
+    08:00
+
+2017-09-10
+    08:00  +#1
+    09:00
+""",
+"""(done) #1 Task 1
+""")
