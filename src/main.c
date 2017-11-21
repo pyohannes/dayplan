@@ -257,7 +257,7 @@ int print_sums (DplList *tasks)
         const char *name;
 
         DPL_FORWARD_ERROR (dpl_group_name_get (first, &name));
-        DPL_FORWARD_ERROR (dpl_group_tasks_get (first, &iter));
+        DPL_FORWARD_ERROR (dpl_group_entries_get (first, &iter));
         DPL_FORWARD_ERROR (dpl_acc_durance (iter, &durance));
         DPL_FORWARD_ERROR (dpl_time_fmt_durance (sdurance, 1024, "%Hh %mm",
                     durance));

@@ -9,6 +9,44 @@
 # include "dpl/defs.h"
 
 
+#define DPL_STRCPY(DPL_dst, DPL_src, DPL_dstsize) { \
+    int DPL_pos = strlen (DPL_src); \
+    if (DPL_pos >= DPL_dstsize) { \
+        DPL_dstsize *= 2; \
+        if (!(DPL_dst = realloc (DPL_dst, DPL_dstsize))) { \
+            free (DPL_dst); \
+            return DPL_ERR_MEM; \
+        } \
+    } \
+    strcpy (DPL_dst, DPL_src); \
+}
+/* Copy a string. Reallocate memory if needed.
+ *
+ * Preconditions
+ *   - DPL_src is not 0.
+ *   - DPL_dstsize is the size of the buffer DPL_dst.
+ *
+ * Preconditions
+ *   - The size of DPL_src is less than DPL_dstsize.
+ * Postconditions
+ *   - The content of DPL_src is copied to DPL_dst.
+ *
+ * Preconditions
+ *   - The size of DPL_src is more than or equal to DPL_dstsize.
+ *   - Memory can be allocated.
+ * Postconditions
+ *   - DPL_dst is enlarged to twice the size of DPL_src.
+ *   - The content of DPL_src is copied to DPL_dst.
+ *
+ * Preconditions
+ *   - The size of DPL_src is more than or equal to DPL_dstsize.
+ *   - Memory cannot be allocated.
+ * Postconditions
+ *   - DPL_ERR_MEM is returned from the calling functions.
+ *   - DPL_dst is freed.
+ */
+
+
 #define DPL_STRDUP(DPL_dst, DPL_src) \
     if (DPL_dst) { \
         free (DPL_dst); \
