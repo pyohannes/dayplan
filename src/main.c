@@ -462,11 +462,6 @@ int parse_arguments (int argc, char *argv[])
         }
     }
 
-    if (!options.input) {
-        fprintf (stderr, usage);
-        return DPL_ERR_INPUT;
-    }
-
     if (optind >= argc) {
         fprintf (stderr, usage);
         return DPL_ERR_INPUT;
@@ -495,7 +490,12 @@ int main (int argc, char *argv[])
         return 1;
     }
 
-    ret = dpl_parse (options.input, &tasks, options.strict);
+    if (options.input) {
+        ret = dpl_parse_file (options.input, &tasks, options.strict);
+    } else {
+        ret = dpl_parse (stdin, "<stdin>", &tasks, options.strict);
+    }
+
     if (ret != DPL_OK) {
         /* dpl_parse prints an error */
         return 1;

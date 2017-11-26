@@ -7,10 +7,30 @@
 # include "dpl/list.h"
 
 
-int dpl_parse (const char *filename, DplList **list, int strict);
+int dpl_parse_file (const char *filename, DplList **list, int strict);
+/* Open and parse a dayplan data file.
+ *
+ * Preconditions
+ *   - file is an open file
+ *   - filename is not 0
+ *   - list is not 0
+ *
+ * DPL_ERR_IO
+ *   Preconditions
+ *     - The file denoted by filename cannot be opened for reading.
+ *
+ * Preconditions
+ *   - The file denoted by filename can be opened for reading.
+ *
+ * Otherwise like dpl_parse.
+ */ 
+
+
+int dpl_parse (FILE *file, const char *filename, DplList **list, int strict);
 /* Parse a dayplan data file.
  *
  * Preconditions
+ *   - file is an open file
  *   - filename is not 0
  *   - list is not 0
  *
@@ -21,13 +41,6 @@ int dpl_parse (const char *filename, DplList **list, int strict);
  * Preconditions
  *   - memory can be allocated
  *
- * DPL_ERR_IO
- *   Preconditions
- *     - The file denoted by filename cannot be opened for reading.
- *
- * Preconditions
- *   - The file denoted by filename can be opened for reading.
- * 
  * DPL_ERR_SYNTAX
  *   Preconditions
  *     - The data file contains a syntax error.

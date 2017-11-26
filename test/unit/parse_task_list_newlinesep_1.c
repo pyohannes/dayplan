@@ -14,7 +14,7 @@ int test_unit_parse_task_list_newlinesep_1 (int argc, char *argv[])
                 "  #2  Task 2\n"
                 "  11:00\n"));
 
-    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
+    DPL_ASSERT_OK (dpl_parse_file (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_list_len (tasks, &len));
     DPL_ASSERT_EQ (len, 2);

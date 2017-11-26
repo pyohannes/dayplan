@@ -24,7 +24,7 @@ int test_unit_list_filter_ref_done_1 (int argc, char *argv[])
                 "  12:00\n");
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN, content));
 
-    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
+    DPL_ASSERT_OK (dpl_parse_file (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_list_len (tasks, &len));
     DPL_ASSERT_EQ (len, 8);

@@ -27,7 +27,7 @@ int test_unit_parse_task_list_2 (int argc, char *argv[])
                 "    Back to work.\n"
                 "  11:00\n"));
 
-    DPL_ASSERT_OK (dpl_parse (DPL_tmpfile, &tasks, 0));
+    DPL_ASSERT_OK (dpl_parse_file (DPL_tmpfile, &tasks, 0));
     DPL_ASSERT_NEQ (tasks, 0);
     DPL_ASSERT_OK (dpl_list_len (tasks, &len));
     DPL_ASSERT_EQ (len, 3);

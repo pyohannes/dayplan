@@ -881,7 +881,24 @@ static int yylex (DplParseContext *ctx)
 }
 
 
-int dpl_parse (const char *filename, DplList **list, int strict)
+int dpl_parse_file (const char *filename, DplList **list, int strict)
+{
+    FILE *f;
+    int ret;
+
+    if (!(f = fopen (filename, "r"))) {
+        return DPL_ERR_IO;
+    }
+
+    ret = dpl_parse (f, filename, list, strict);
+
+    fclose (f);
+
+    return ret;
+}
+
+
+int dpl_parse (FILE *file, const char *filename, DplList **list, int strict)
 {
     int ret = DPL_OK;
 
@@ -894,6 +911,7 @@ int dpl_parse (const char *filename, DplList **list, int strict)
     yydebug = 1;
 #endif
     ctx.strict = strict;
+    ctx.file = file;
     ctx.filename = filename;
     ctx.lineno = 1;
     ctx.text = 0;
@@ -903,11 +921,6 @@ int dpl_parse (const char *filename, DplList **list, int strict)
 
     DPL_ADD_CHAR(&ctx, 0);
     ctx.textpos = 0;
-
-    if (!(ctx.file = fopen (ctx.filename, "r"))) {
-        free (ctx.text);
-        return DPL_ERR_IO;
-    }
 
     if ((ret = dpl_list_new (&ctx.entries)) != DPL_OK) {
         free (ctx.text);
@@ -923,7 +936,6 @@ int dpl_parse (const char *filename, DplList **list, int strict)
         case 2:  ret = DPL_ERR_MEM;    break;
     }
 
-    fclose (ctx.file);
     free (ctx.text);
 
     *list = ctx.entries;
