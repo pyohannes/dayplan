@@ -194,6 +194,7 @@ static int dpl_parse_end_set (DplParseContext *ctx)
     DPL_FORWARD_ERROR (dpl_list_iter (ctx->entries, &iter));
     if (dpl_iter_next (iter, &curr) != DPL_OK) {
         /* empty task list */
+        dpl_iter_free (iter);
         return DPL_OK;
     }
 

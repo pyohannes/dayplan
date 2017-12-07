@@ -16,7 +16,7 @@ struct DplListItem {
 struct DplIter_
 {
     void *data;
-    int free_data;
+    void (*free_data)(void *);
     int (*next_func)(struct DplIter_ *, const DplEntry **next);
     DplIter *source;
 };
@@ -70,7 +70,7 @@ static int dpl_list_contains (const DplList *l, const DplEntry *entry,
 int dpl_iter_free (DplIter *iter)
 {
     if (iter->free_data) {
-        free (iter->data);
+        iter->free_data (iter->data);
     }
 
     free (iter);
@@ -374,7 +374,7 @@ int dpl_filter_period (DplIter *in, time_t start, time_t end, DplIter **out)
     DPL_FORWARD_ERROR (dpl_iter_new (out));
     (*out)->data = (void *)data;
     (*out)->next_func = dpl_filter_period_next_;
-    (*out)->free_data = 1;
+    (*out)->free_data = free;
     (*out)->source = in;
 
     return DPL_OK;
@@ -433,6 +433,12 @@ int dpl_filter_unique_next_ (struct DplIter_ *iter, const DplEntry **next)
 }
 
 
+static void dpl_filter_unique_free (void *list)
+{
+    dpl_list_free ((DplList *)list, 0);
+}
+
+
 int dpl_filter_unique (DplIter *in, DplIter **out)
 {
     DplList *returned;
@@ -447,7 +453,7 @@ int dpl_filter_unique (DplIter *in, DplIter **out)
 
     (*out)->data = (void *)returned;
     (*out)->next_func = dpl_filter_unique_next_;
-    (*out)->free_data = 1;
+    (*out)->free_data = dpl_filter_unique_free;
     (*out)->source = in;
 
     return DPL_OK;

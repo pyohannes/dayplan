@@ -8,6 +8,7 @@ def dpl_run(cmd, content, valgrind=False, stdin=False):
     cmd = [ 'dayplan' ] + cmd
     if valgrind:
         cmd.insert(0, 'valgrind')
+        cmd.insert(1, '--leak-check=full')
     if stdin:
         p = subprocess.Popen(
                 cmd, 
@@ -32,6 +33,7 @@ def dpl_run(cmd, content, valgrind=False, stdin=False):
             shutil.rmtree(d)
     out, err = out.decode('utf-8'), err.decode('utf-8')
     if valgrind:
+        print(err)
         assert 'All heap blocks were freed -- no leaks are possible' in err
     return p.returncode, out, err
 
@@ -43,12 +45,11 @@ def assert_dpl_cmd_error(cmd, content):
 
 
 def assert_dpl_cmd_ok(cmd, content, expected):
-    ret, out, err = dpl_run(cmd, content, valgrind=False, stdin=False)
+    ret, out, err = dpl_run(cmd, content, valgrind=True, stdin=False)
     print(ret, "\n", out, "\n", err, "\n", expected)
     assert out.strip() == expected.strip()
     assert ret == 0
     # ensure the same result when using stdin for input
-    reti, outi, erri = dpl_run(cmd, content, valgrind=False, stdin=True)
+    reti, outi, erri = dpl_run(cmd, content, valgrind=True, stdin=True)
     assert reti == ret
     assert outi == out
-    assert erri == err

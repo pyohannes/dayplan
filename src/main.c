@@ -6,6 +6,8 @@
 #include "dpl/dpl.h"
 #include "dpl/utils.h"
 
+
+/* Color codes used for colored terminal output. */
 static const char *COLORS[] = {
     "\x1B[0m",
     "\x1B[30;1m",
@@ -16,20 +18,18 @@ static const char *COLORS[] = {
 };
 
 
-
-#define COLOR_DEFAULT COLORS[0]
-#define COLOR_GREY    COLORS[1]
-#define COLOR_YELLOW  COLORS[2]
-#define COLOR_RED     COLORS[3]
-#define COLOR_BLUE    COLORS[4]
-#define COLOR_CYAN    COLORS[5]
+#define C_DEFAULT COLORS[0]
+#define C_GREY    COLORS[1]
+#define C_YELLOW  COLORS[2]
+#define C_RED     COLORS[3]
+#define C_BLUE    COLORS[4]
+#define C_CYAN    COLORS[5]
 
 
 static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "\n"
 "The following commands are supported:\n"
 "\n"
-"   help       Print this help text.\n"
 "   work       Print a list of work items.\n"
 "   tasks      Print a list of tasks.\n"
 "   sum        Print an accumulated sum of time for tasks.\n"
@@ -47,74 +47,145 @@ static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "  -c, --date-to DATE Only process entries before and including the given date.\n"
 "  -o, --oneline      Print all task information in one line.\n"
 "  -s, --strict       Turn warnings into errors.\n"
+"  -g, --group-by-day Group accumulated sums by days, not by tasks.\n"
 "";
 
 
+/* Global struct to hold information from command line options. */
 static struct {
+
+    /* Do not consider entries older than tm_from. */
     time_t tm_from;
+
+    /* Do not consider entries newer than tm_to. */
     time_t tm_to;
+
+    /* If set to 1 print entries in a short one-line form. */
     int oneline;
+
+    /* If set to 1 group sums by day. */
     int group_by_day;
+
+    /* If set to 1 treat parser warnings as errors. */
     int strict;
+
+    /* Name of the input file to be used. */
     const char *input;
+
 } options = {
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
+    0, /* tm_from */
+    0, /* tm_to */
+    0, /* oneline */
+    0, /* group_by_day */
+    0, /* strict */
+    0, /* input */
 };
 
 
-int print_task (DplEntry *task, int print_time_info, int refinfo) 
+static int dpl_time_to_str (time_t time, char *buf, size_t bufsize)
 {
+    struct tm tm;
+    if (   localtime_r (&time, &tm) == 0
+        || asctime_r (&tm, buf) == 0) {
+        return DPL_ERR_SYS;
+    } 
+    buf[strlen (buf) - 1] = 0;
+
+    return DPL_OK;
+}
+
+
+static void dpl_print_indent (const char *s)
+{
+    printf ("    ");
+
+    while (*s) {
+        putchar (*s);
+
+        if (*s++ == '\n') {
+            printf ("    ");
+        }
+    }
+}
+
+
+static void dpl_print_task_oneline (const char *name, const char *begin, 
+        const char *durance, int done, int taskid, int print_time)
+{
+    if (print_time) {
+        printf ("%s%s%s  %s  ", C_YELLOW, begin, C_DEFAULT, durance);
+    }
+    if (taskid) {
+            printf ("%s(%s) %s#%d%s ", 
+                    done ? C_CYAN : C_RED,
+                    done ? "done" : "open",
+                    C_GREY,
+                    taskid,
+                    C_DEFAULT);
+    }
+
+    if (name) {
+        printf (name);
+    }
+
+    printf ("\n");
+}
+
+
+static void dpl_print_task_multiline (const char *name, const char *desc, 
+        const char *begin, const char *durance, int done, int taskid, 
+        int print_time)
+{
+    if (taskid) {
+        printf ("%sId:      #%d%s\n", C_GREY, taskid, C_DEFAULT);
+    }
+    if (print_time) {
+        printf ("%sDate:    %s%s\n", C_YELLOW, begin, C_DEFAULT);
+        printf ("Durance: %s\n", durance);
+    }
+    if (taskid) {
+        printf ("%sStatus:  %s%s\n", 
+                done ? C_CYAN : C_RED,
+                done ? "done" : "open",
+                C_DEFAULT);
+    }
+
+    printf ("\n");
+
+    if (name) {
+        dpl_print_indent (name);
+        printf ("\n\n");
+    }
+
+    if (desc) {
+        dpl_print_indent (desc);
+        printf ("\n\n");
+    }
+}
+
+
+static int dpl_print_task (const DplEntry *entry, int print_time) 
+{
+#define BUFSIZE 1024
     time_t begin, end;
-    const char *title;
-    const char *desc;
-    char sbegin[1024];
-    char sdurance[1024];
-    int ret;
-    DplEntry *ref;
+    const char *name;
+    char sbegin[BUFSIZE];
+    char sdurance[BUFSIZE];
+    const DplEntry *task;
     int done = 0;
-    int refid = 0;
+    uint32_t taskid = 0;
 
-    ret = dpl_entry_begin_get (task, &begin);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task begin time.\n");
-        return ret;
-    }
+    dpl_entry_begin_get (entry, &begin);
+    dpl_entry_name_get (entry, &name);
 
-    ret = dpl_entry_work_end_get (task, &end);
-    if (ret == DPL_ERR_TYPE) {
+    if (dpl_entry_work_end_get (entry, &end) == DPL_ERR_TYPE) {
         end = begin;
-    } else if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task end time.\n");
-        return ret;
     }
 
-    ret = dpl_entry_name_get (task, &title);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task title.\n");
-        return ret;
-    }
-
-    ret = dpl_entry_desc_get (task, &desc);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task description.\n");
-        return ret;
-    } 
-
-    struct tm tmbegin;
-    if (!localtime_r (&begin, &tmbegin)) {
+    if (dpl_time_to_str (begin, sbegin, BUFSIZE) != DPL_OK) {
         fprintf (stderr, "Error: Cannot convert time value: %ld.\n", begin);
+        return DPL_ERR_SYS;
     }
-
-    if (!asctime_r (&tmbegin, sbegin)) {
-        fprintf (stderr, "Error: Cannot convert time value: %ld.\n", begin);
-        return ret;
-    } 
-    sbegin[strlen (sbegin) - 1] = 0;
 
     if ((dpl_time_fmt_durance (sdurance, 1024, "%Hh %mm", 
                     end - begin)) != DPL_OK) {
@@ -123,265 +194,210 @@ int print_task (DplEntry *task, int print_time_info, int refinfo)
         return DPL_ERR_SYS;
     } 
 
-    if (refinfo) {
-        DplEntry *ref = task;
-        DplEntryType type;
+    if (dpl_entry_work_task_get (entry, &task) == DPL_ERR_TYPE) {
+        task = entry;
+    }
 
-        if ((ret = dpl_entry_type_get (task, &type)) != DPL_OK) {
-            fprintf (stderr, "Error: Cannot get type info from ref.\n");
-            return ret;
-        }
-        if (type == ENTRY_WORK) {
-            if ((ret = dpl_entry_work_task_get (task, &ref)) != DPL_OK) {
-                fprintf (stderr, "Error: Cannot get task from work.\n");
-                return ret;
-            }
-        }
-
-        if (ref) {
-            if ((ret = dpl_entry_task_done_get (ref, &done)) != DPL_OK) {
-                fprintf (stderr, "Error: Cannot get done info from ref.\n");
-                return ret;
-            }
-            if ((ret = dpl_entry_task_id_get (ref, &refid)) != DPL_OK) {
-                fprintf (stderr, "Error: Cannot get reference id.\n");
-                return ret;
-            }
-        } else {
-            done = 0;
-            refid = 0;
-            refinfo = 0;
-        }
+    if (task) {
+        dpl_entry_task_done_get (entry, &done);
+        dpl_entry_task_id_get (entry, &taskid);
+    } else {
+        done = taskid = 0;
     }
 
     if (options.oneline) {
-        if (print_time_info) {
-            printf ("%s%s%s  %s  ", COLOR_YELLOW, sbegin, 
-                    COLOR_DEFAULT, sdurance);
-        }
-        if (refinfo) {
-                printf ("%s(%s) %s#%d%s ", 
-                        done ? COLOR_CYAN : COLOR_RED,
-                        done ? "done" : "open",
-                        COLOR_GREY,
-                        refid,
-                        COLOR_DEFAULT);
-            }
-            printf ("%s\n", title ? title : "");
-        } else {
-            if (refinfo) {
-                printf ("%sId:      #%d%s\n", 
-                        COLOR_GREY,
-                        refid,
-                        COLOR_DEFAULT);
-            }
-            if (print_time_info) {
-                printf ("%sDate:    %s%s\n", COLOR_YELLOW, sbegin, 
-                    COLOR_DEFAULT);
-            printf ("Durance: %s\n", sdurance);
-        }
-        if (refinfo) {
-            printf ("%sStatus:  %s%s\n", 
-                    done ? COLOR_CYAN : COLOR_RED,
-                    done ? "done" : "open",
-                    COLOR_DEFAULT);
-        }
+        dpl_print_task_oneline (name, sbegin, sdurance, done, taskid, 
+                print_time);
+    } else {
+        const char *desc;
 
-        printf ("\n");
-
-        if (title) {
-            printf ("    %s\n\n", title);
-        }
-
-        if (desc) {
-            char *pos = desc;
-
-            printf ("    ");
-
-            while (*pos) {
-                if (*pos == '\n') {
-                    printf ("\n    ");
-                } else {
-                    putchar (*pos);
-                }
-                pos += 1;
-            }
-            printf ("\n\n");
-        }
+        dpl_entry_desc_get (entry, &desc);
+        dpl_print_task_multiline (name, desc, sbegin, sdurance, done, taskid, 
+                print_time);
     }
 
     return DPL_OK;
 }
 
 
-int print_sums (DplList *tasks)
+static int dpl_period_filter_apply (DplIter **in, DplIter **out)
 {
-    DplGroup *first;
-    DplIter *iter_full, *iter_tasks, *iter;
-    int ret;
-
-    ret = dpl_list_iter (tasks, &iter_full);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
-        return ret;
-    }
-
-    ret = dpl_filter_type (iter_full, ENTRY_WORK, &iter_tasks);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain reference filter.\n");
-        return ret;
-    }
+    int ret = DPL_OK;
 
     if (options.tm_from || options.tm_to) {
-        ret = dpl_filter_period (iter_tasks, options.tm_from, options.tm_to, 
-                &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
+        ret = dpl_filter_period (*in, options.tm_from, options.tm_to, 
+                out);
     } else {
-        /* FIXME: careful when freeing! */
-        iter = iter_tasks;
+        *out = *in;
+        *in = 0;
     }
 
+    return ret;
+}
+
+
+static int dpl_group_apply (DplIter *iter, DplGroup **group)
+{
     if (options.group_by_day) {
-        DPL_FORWARD_ERROR (dpl_group_by_day (iter, &first));
+        DPL_FORWARD_ERROR (dpl_group_by_day (iter, group));
     } else {
-        DPL_FORWARD_ERROR (dpl_group_by_title (iter, &first));
+        DPL_FORWARD_ERROR (dpl_group_by_title (iter, group));
     }
-
-    while (first) {
-        time_t durance;
-        DplIter *iter;
-        char sdurance[1024];
-        const char *name;
-
-        DPL_FORWARD_ERROR (dpl_group_name_get (first, &name));
-        DPL_FORWARD_ERROR (dpl_group_entries_get (first, &iter));
-        DPL_FORWARD_ERROR (dpl_acc_durance (iter, &durance));
-        DPL_FORWARD_ERROR (dpl_time_fmt_durance (sdurance, 1024, "%Hh %mm",
-                    durance));
-
-        printf ("%9s %s\n", sdurance, name);
-        DPL_FORWARD_ERROR (dpl_group_next (first, &first));
-    } 
-
+    
     return DPL_OK;
 }
 
 
-int print_ref_list (DplList *tasks, int done, 
-        int undone)
+static int dpl_print_sums (DplList *entries)
 {
-    DplIter *iter_full, *iter_period, *iter;
-    DplEntry *task;
-    int ret;
+    DplGroup *first = 0;
+    DplIter *i_full = 0;
+    DplIter *i_task = 0; 
+    DplIter *i_dest = 0;
+    DplIter *i_group = 0;
+    int ret = DPL_OK;
 
-    ret = dpl_list_iter (tasks, &iter_full);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
-        return ret;
+    DPL_FORWARD_ERROR (dpl_list_iter (entries, &i_full));
+
+    if (   (ret = dpl_filter_type (i_full, ENTRY_WORK, &i_task)) == DPL_OK
+        && (ret = dpl_period_filter_apply (&i_task, &i_dest)) == DPL_OK
+        && (ret = dpl_group_apply (i_dest, &first)) == DPL_OK) {
+        DplGroup *group = first;
+
+        while (group) {
+            time_t durance;
+            char sdurance[1024];
+            const char *name;
+    
+            if (   (ret = dpl_group_name_get (group, &name)) == DPL_OK
+                && (ret = dpl_group_entries_get (group, &i_group)) == DPL_OK
+                && (ret = dpl_acc_durance (i_group, &durance)) == DPL_OK
+                && (ret = dpl_time_fmt_durance (sdurance, 1024, "%Hh %mm",
+                        durance)) == DPL_OK) {
+                printf ("%9s %s\n", sdurance, name);
+
+                dpl_iter_free (i_group);
+                i_group = 0;
+    
+                if (dpl_group_next (group, &group) != DPL_OK) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        } 
     }
 
-    if (options.tm_from || options.tm_to) {
-        ret = dpl_filter_period (iter_full, done ? options.tm_from : 0, 
-                options.tm_to, &iter_period);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-    } else {
-        iter_period = iter_full;
+    if (i_full) dpl_iter_free (i_full);
+    if (i_task) dpl_iter_free (i_task);
+    if (i_dest) dpl_iter_free (i_dest);
+    if (i_group) dpl_iter_free (i_group);
+    if (first) dpl_group_free (first);
+
+    return ret;
+}
+
+
+static int dpl_print_task_list (DplList *entries, int done)
+{
+    DplIter *i_full = 0; 
+    DplIter *i_time = 0; 
+    DplIter *i_work = 0; 
+    DplIter *i_task = 0; 
+    DplIter *i_done = 0; 
+    DplIter *i_dest = 0;
+
+    const DplEntry *entry;
+    int ret = DPL_OK;
+
+    DPL_FORWARD_ERROR (dpl_list_iter (entries, &i_full));
+
+    if (dpl_period_filter_apply (&i_full, &i_time) != DPL_OK) {
+        dpl_iter_free (i_full);
+        return DPL_ERR_MEM;
     }
 
     if (done) {
-        DplIter *iter_work, *iter_tasks, *iter_done;
-
-        ret = dpl_filter_type (iter_period, ENTRY_WORK, &iter_work);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-        ret = dpl_filter_task_for_work (iter_work, &iter_tasks);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-        ret = dpl_filter_done (iter_tasks, 1, &iter_done);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate undone filter.\n");
-            return ret;
-        }
-        ret = dpl_filter_unique (iter_done, &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
-        }
-    } else if (undone) {
-        DplIter *iter_refs;
-
-        ret = dpl_filter_type (iter_period, ENTRY_TASK, &iter_refs);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot obtain reference filter.\n");
-            return ret;
-        }
-
-        ret = dpl_filter_done (iter_refs, 0, &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate undone filter.\n");
-            return ret;
+        if (   dpl_filter_type (i_time, ENTRY_WORK, &i_work) != DPL_OK
+            || dpl_filter_task_for_work (i_work, &i_task) != DPL_OK
+            || dpl_filter_done (i_task, 1, &i_done) != DPL_OK
+            || dpl_filter_unique (i_done, &i_dest) != DPL_OK) {
+            ret = DPL_ERR_MEM;
         }
     } else {
-        iter = iter_period;
+        if (   dpl_filter_type (i_time, ENTRY_TASK, &i_task) != DPL_OK
+            || dpl_filter_done (i_task, 0, &i_dest) != DPL_OK) {
+            ret = DPL_ERR_MEM;
+        }
     }
 
-    while ((ret = dpl_iter_next (iter, &task)) == DPL_OK) {
-        DPL_FORWARD_ERROR (print_task (task, 0, 1));
+    if (ret == DPL_OK) {
+        while ((ret = dpl_iter_next (i_dest, &entry)) == DPL_OK) {
+            if ((ret = dpl_print_task (entry, 0)) != DPL_OK) {
+                break;
+            }
+        }
+        ret = DPL_OK;
     }
+
+    if (i_full) dpl_iter_free (i_full);
+    if (i_time) dpl_iter_free (i_time);
+    if (i_work) dpl_iter_free (i_work);
+    if (i_task) dpl_iter_free (i_task);
+    if (i_done) dpl_iter_free (i_done);
+    if (i_dest) dpl_iter_free (i_dest);
+
+    return ret;
+}
+
+
+static int dpl_print_tasks (DplList *tasks)
+{
+    DPL_FORWARD_ERROR (dpl_print_task_list (tasks, 1));
+    DPL_FORWARD_ERROR (dpl_print_task_list (tasks, 0));
 
     return DPL_OK;
 }
 
 
-int print_task_list (DplList *tasks)
+static int dpl_print_work (DplList *entries)
 {
-    DplIter *iter_full, *iter_tasks, *iter;
-    DplEntry *task;
+    DplIter *i_full = 0; 
+    DplIter *i_work = 0; 
+    DplIter *i_time = 0;
+    const DplEntry *entry;
     int ret;
 
-    ret = dpl_list_iter (tasks, &iter_full);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task list iterator.\n");
-        return ret;
-    }
-
-    ret = dpl_filter_type (iter_full, ENTRY_WORK, &iter_tasks);
-    if (ret != DPL_OK) {
-        fprintf (stderr, "Error: Cannot obtain task filter.\n");
-        return ret;
-    }
-
-    if (options.tm_from || options.tm_to) {
-        ret = dpl_filter_period (iter_tasks, options.tm_from, options.tm_to, 
-                &iter);
-        if (ret != DPL_OK) {
-            fprintf (stderr, "Error: Cannot allocate task list filter.\n");
-            return ret;
+    if (   dpl_list_iter (entries, &i_full) == DPL_OK
+        && dpl_filter_type (i_full, ENTRY_WORK, &i_work) == DPL_OK
+        && dpl_period_filter_apply (&i_work, &i_time) == DPL_OK) {
+        while ((ret = dpl_iter_next (i_time, &entry)) == DPL_OK) {
+            if ((ret = dpl_print_task (entry, 1)) != DPL_OK) {
+                break;
+            }
         }
+        ret = DPL_OK;
     } else {
-        /* FIXME: careful when freeing! */
-        iter = iter_tasks;
+        /* nothing else can be returned by the above, except DPL_ERR_MEM and
+         * DPL_OK */
+        ret = DPL_ERR_MEM;
     }
 
-    while ((ret = dpl_iter_next (iter, &task)) == DPL_OK) {
-        print_task (task, 1, 1);
+    if (i_full) {
+        dpl_iter_free (i_full);
+    }
+    if (i_work) {
+        dpl_iter_free (i_work);
+    }
+    if (i_time) {
+        dpl_iter_free (i_time);
     }
 
-    return DPL_OK;
+    return ret;
 }
 
 
-int parse_arguments (int argc, char *argv[])
+static int dpl_parse_arguments (int argc, char *argv[])
 {
     int option_index = 0;
     int c;
@@ -402,7 +418,7 @@ int parse_arguments (int argc, char *argv[])
 #define PARSE_DATE { \
     time_t now = time (0); \
     int ret; \
-    ret = sscanf (optarg, "%u-%u-%u", &tm.tm_year, &tm.tm_mon, &tm.tm_mday); \
+    ret = sscanf (optarg, "%d-%d-%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday); \
     if (ret != 3) { \
         fprintf (stderr, "Error: Invalid date format: %s\n", optarg); \
         return DPL_ERR_INPUT; \
@@ -457,15 +473,80 @@ int parse_arguments (int argc, char *argv[])
                 options.strict = 1;
                 break;
             case '?':
-                fprintf (stderr, "Error: Invalid arguments.\n%s", usage);
+                /* getopt gives error information */
                 return DPL_ERR_INPUT;
         }
     }
 
-    if (optind >= argc) {
-        fprintf (stderr, usage);
-        return DPL_ERR_INPUT;
+    return DPL_OK;
+}
+
+
+static int dpl_check_color_output ()
+{
+    if (!isatty (1)) {
+        size_t i;
+
+        for (i = 0; i < sizeof (COLORS) / sizeof (COLORS[0]); i++) {
+            COLORS[i] = "";
+        }
     }
+
+    return DPL_OK;
+}
+
+
+static int dpl_parse_main (DplList **entries)
+{
+    if (options.input) {
+        DPL_FORWARD_ERROR (
+                dpl_parse_file (options.input, entries, options.strict));
+    } else {
+        DPL_FORWARD_ERROR (
+                dpl_parse (stdin, "<stdin>", entries, options.strict));
+    }
+
+    return DPL_OK;
+}
+
+
+static int dpl_process_commands (int argc, char *argv[], DplList *entries)
+{
+    while (optind < argc) {
+        if (strcmp (argv[optind], "work") == 0) {
+            DPL_FORWARD_ERROR (dpl_print_work (entries));
+        } else if (strcmp (argv[optind], "tasks") == 0) {
+            DPL_FORWARD_ERROR (dpl_print_tasks (entries));
+        } else if (strcmp (argv[optind], "sum") == 0) {
+            DPL_FORWARD_ERROR (dpl_print_sums (entries));
+        } else {
+            fprintf (stderr, usage);
+            return DPL_ERR_INPUT;
+        } 
+        optind += 1;
+    }
+
+    return DPL_OK;
+}
+
+
+static int dpl_report_error (int errorcode)
+{
+    const char *msg;
+
+    switch (errorcode) {
+        case DPL_ERR_MEM:
+            msg = "Out of memory";
+            break;
+        case DPL_ERR_SIZE:
+            msg = "Internal overflow";
+            break;
+        default:
+            msg = "Unknown error code";
+            break;
+    }
+
+    fprintf (stderr, "Error: %s.\n", msg);
 
     return DPL_OK;
 }
@@ -473,67 +554,26 @@ int parse_arguments (int argc, char *argv[])
 
 int main (int argc, char *argv[])
 {
-    int ret;
-    DplList *tasks;
+    int ret = 1;
+    DplList *entries;
 
-    if (!isatty (1)) {
-        COLORS[0] = "";
-        COLORS[1] = "";
-        COLORS[2] = "";
-        COLORS[3] = "";
-        COLORS[4] = "";
-        COLORS[5] = "";
-    }
+    dpl_check_color_output ();
 
-    ret = parse_arguments (argc, argv);
-    if (ret != DPL_OK) {
+    if (dpl_parse_arguments (argc, argv) != DPL_OK) {
         return 1;
     }
 
-    if (options.input) {
-        ret = dpl_parse_file (options.input, &tasks, options.strict);
-    } else {
-        ret = dpl_parse (stdin, "<stdin>", &tasks, options.strict);
-    }
-
-    if (ret != DPL_OK) {
-        /* dpl_parse prints an error */
+    if (dpl_parse_main (&entries) != DPL_OK) {
         return 1;
     }
 
-    while (optind < argc) {
-        if (strcmp (argv[optind], "work") == 0) {
-            ret = print_task_list (tasks);
-            if (ret != DPL_OK) {
-                ret = 1;
-                break;
-            }
-        } else if (strcmp (argv[optind], "tasks") == 0) {
-            ret = print_ref_list (tasks, 1, 0);
-            if (ret != DPL_OK) {
-                ret = 1;
-                break;
-            }
-            ret = print_ref_list (tasks, 0, 1);
-            if (ret != DPL_OK) {
-                ret = 1;
-                break;
-            }
-        } else if (strcmp (argv[optind], "sum") == 0) {
-            ret = print_sums (tasks);
-            if (ret != DPL_OK) {
-                ret = 1;
-                break;
-            }
-        } else {
-            fprintf (stderr, usage);
-            ret = 1;
-            break;
-        } 
-        optind += 1;
+    ret = dpl_process_commands (argc, argv, entries);
+    
+    if (ret != DPL_OK) {
+        dpl_report_error (ret);
     }
 
-    dpl_list_free (tasks, 1);
+    dpl_list_free (entries, 1);
 
-    return 0;
+    return (ret != DPL_OK);
 }
