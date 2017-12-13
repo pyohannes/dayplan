@@ -945,6 +945,7 @@ int dpl_parse (FILE *file, const char *filename, DplList **list, int strict)
         DPL_FORWARD_ERROR (dpl_parse_end_set (&ctx));
         DPL_FORWARD_ERROR (dpl_parse_marker_remove (&ctx));
         DPL_FORWARD_ERROR (dpl_parse_link_entries (&ctx));
+        DPL_FORWARD_ERROR (dpl_list_sort (list));
     }
 
     return ret;

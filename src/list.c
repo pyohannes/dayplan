@@ -458,3 +458,122 @@ int dpl_filter_unique (DplIter *in, DplIter **out)
 
     return DPL_OK;
 }
+
+
+#define DPL_LISTITEMS_JOIN(DPL_items1, DPL_item2) { \
+    struct DplListItem *pos = DPL_items1; \
+    while (pos->next) { \
+        pos = pos->next; \
+    } \
+    pos->next = DPL_item2; \
+}
+
+
+static int dpl_list_sort_quick_divide (struct DplListItem *input, 
+        struct DplListItem **part1, struct DplListItem **part2)
+/* Divide a list of entries by the smaller of the first two items.
+ *
+ * DPL_OK
+ *   Preconditions
+ *     - input is allocated.
+ *     - input contains at least two items.
+ *   Preconditions
+ *     - The smaller of the first two items of input is the first item of part1.
+ *     - All items smaller as the first item of part1 are stored in part1.
+ *     - All items greater equal than the first item of part1 are stored
+ *       in part2 (except the first item of part1).
+ */
+{
+    struct DplListItem *pos1, *pos2;
+    time_t begin1, begin2;
+
+    /* ensure that the first item in part1 <= first item in part2 */
+    *part1 = input;
+    *part2 = input->next;
+    dpl_entry_begin_get ((*part1)->item, &begin1);
+    dpl_entry_begin_get ((*part2)->item, &begin2);
+
+    if (begin1 > begin2) {
+        (*part1) = input->next;
+        (*part2) = input;
+        begin1 = begin2;
+    }
+
+    input = input->next->next;
+    pos1 = (*part1);
+    pos2 = (*part2);
+
+    /* ensure that items in part1 <= items in part2 */
+    while (input) {
+        dpl_entry_begin_get (input->item, &begin2);
+
+        if (begin2 < begin1) {
+            pos1->next = input;
+            pos1 = pos1->next;
+        } else {
+            pos2->next = input;
+            pos2 = pos2->next;
+        }
+
+        input = input->next;
+    }
+
+    /* ensure list end markers */
+    pos1->next = 0;
+    pos2->next = 0;
+
+    return DPL_OK;
+}
+
+
+static int dpl_list_sort_quick (struct DplListItem **list)
+/* Sort the entries in *list via a stable quicksort.
+ *
+ * DPL_OK
+ *   Preconditions
+ *     - *list is allocated.
+ *   Postconditions
+ *     - The original list is overwritten.
+ *     - DplEntries in *list are sorted by ascending begin time.
+ *     - The sort is stable.
+ */
+{
+    struct DplListItem *part1, *part2;
+
+    if (!*list || !(*list)->next) {
+        return DPL_OK;
+    }
+
+    /* divide */
+    dpl_list_sort_quick_divide (*list, &part1, &part2);
+
+    /* recurse */
+    dpl_list_sort_quick (&part1);
+    dpl_list_sort_quick (&part2);
+
+    /* merge */
+    DPL_LISTITEMS_JOIN(part1, part2);
+
+    *list = part1;
+
+    return DPL_OK;
+}
+
+
+int dpl_list_sort (DplList **list)
+{
+    struct DplListItem *pos;
+
+    dpl_list_sort_quick (&(*list)->first);
+
+    /* reset last list item */
+    pos = (*list)->first;
+
+    while (pos && pos->next) {
+        pos = pos->next;
+    }
+
+    (*list)->last = pos;
+
+    return DPL_OK;
+}

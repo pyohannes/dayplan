@@ -44,6 +44,7 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/list_push
               test/unit/list_remove
               test/unit/list_remove_2
+              test/unit/list_sort
               test/unit/list_filter_period_1
               test/unit/list_filter_task_ref_1
               test/unit/list_filter_task_ref_2

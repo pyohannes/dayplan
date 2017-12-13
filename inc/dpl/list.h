@@ -251,4 +251,16 @@ int dpl_filter_unique (DplIter *in, DplIter **out);
  */
 
 
+int dpl_list_sort (DplList **list);
+/* Sort the entries in *list. 
+ *
+ * DPL_OK
+ *   Preconditions
+ *     - *list is allocated.
+ *   Postconditions
+ *     - The original list is overwritten.
+ *     - DplEntries in *list are sorted by ascending begin time.
+ */
+
+
 #endif /* DAYPLAN_LIST_H */
