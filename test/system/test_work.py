@@ -63,3 +63,18 @@ Wed Nov 15 08:00:00 2017  1h  0m  Work item
 """)
 
 
+def test_work_oneline_alignment():
+    assert_dpl_cmd_ok(["work", "--oneline"],
+"""2017-10-15
+    08:00 Work item
+    19:00
+
+2017-11-15
+    08:00 Work item
+    09:00
+""",
+"""Sun Oct 15 08:00:00 2017 11h  0m  Work item
+Wed Nov 15 08:00:00 2017  1h  0m  Work item
+""")
+
+

@@ -113,7 +113,7 @@ static void dpl_print_task_oneline (const char *name, const char *begin,
         const char *durance, int done, int taskid, int print_time)
 {
     if (print_time) {
-        printf ("%s%s%s  %s  ", C_YELLOW, begin, C_DEFAULT, durance);
+        printf ("%s%s%s %7s  ", C_YELLOW, begin, C_DEFAULT, durance);
     }
     if (taskid) {
             printf ("%s(%s) %s#%d%s ", 
