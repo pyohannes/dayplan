@@ -18,9 +18,13 @@ int test_unit_list_filter_ref_done_1 (int argc, char *argv[])
                 "  #3  Task 3\n"
                 "  #4  Task 4\n"
                 "  08:00  #1\n"
+                "    For #1.\n"
                 "  09:00  +#2\n"
+                "    Fixes #2.\n"
                 "  10:00  +#1\n"
+                "    And this fixes #1.\n"
                 "  11:00  #3\n"
+                "    This finally relates to #3.\n"
                 "  12:00\n");
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN, content));
 

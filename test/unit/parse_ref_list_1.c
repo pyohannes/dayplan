@@ -27,12 +27,13 @@ int test_unit_parse_ref_list_1 (int argc, char *argv[])
                 "2017-09-11\n"
                 "  #1     Projects/Dayplan\n"
                 "    Write some tests.\n"
-                "  08:00  #1\n"
+                "  08:00  Projects/Dayplan\n"
+                "    Writing tests for dayplan (#1).\n"
                 "  09:00  Coffee\n"
                 "    Everybody needs a break.\n"
                 "\n"
-                "  10:00  #1\n"
-                "    Back to work.\n"
+                "  10:00  Projects/Dayplan\n"
+                "    Back to work (#1).\n"
                 "  11:00\n"));
 
     DPL_ASSERT_OK (dpl_parse_file (DPL_tmpfile, &tasks, 0));
@@ -61,7 +62,7 @@ int test_unit_parse_ref_list_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
     DPL_ASSERT_OK (dpl_entry_desc_get (task, &desc));
-    DPL_ASSERT_EQ (desc, 0);
+    DPL_ASSERT_EQ (strcmp (desc, "Writing tests for dayplan (#1)."), 0);
     DPL_ASSERT_OK (dpl_entry_work_task_get (task, &ref));
     DPL_ASSERT_OK (dpl_entry_desc_get (ref, &desc));
     DPL_ASSERT_EQ (strcmp (desc, "Write some tests."), 0);
@@ -86,7 +87,7 @@ int test_unit_parse_ref_list_1 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
     DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
     DPL_ASSERT_OK (dpl_entry_desc_get (task, &desc));
-    DPL_ASSERT_EQ (strcmp (desc, "Back to work."), 0);
+    DPL_ASSERT_EQ (strcmp (desc, "Back to work (#1)."), 0);
 
     DPL_ASSERT_OK (dpl_iter_free (iter));
     DPL_ASSERT_OK (dpl_list_free (tasks, 1));

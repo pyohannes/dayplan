@@ -15,8 +15,9 @@ int test_unit_list_filter_task_ref_1 (int argc, char *argv[])
 
     DPL_ASSERT_OK (dpl_test_write (DPL_tmpfile, DPL_TMPFILE_LEN,
                 "2017-09-11\n"
-                "  #1     Projects/Dayplan\n"
-                "  08:00  #1\n"
+                "  #1     Write tests.\n"
+                "  08:00  Projects/Dayplan\n"
+                "    Relates to #1.\n"
                 "  09:00  Coffee\n"
                 "  11:00\n"));
 
@@ -45,7 +46,7 @@ int test_unit_list_filter_task_ref_1 (int argc, char *argv[])
 
     DPL_ASSERT_OK (dpl_iter_next (fiter, &task));
     DPL_ASSERT_OK (dpl_entry_name_get (task, &title));
-    DPL_ASSERT_EQ (strcmp (title, "Projects/Dayplan"), 0);
+    DPL_ASSERT_EQ (strcmp (title, "Write tests."), 0);
 
     DPL_ASSERT_EQ (dpl_iter_next (fiter, &task), DPL_ITER_END);
     DPL_ASSERT_OK (dpl_iter_free (fiter));

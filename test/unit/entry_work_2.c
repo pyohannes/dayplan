@@ -15,11 +15,11 @@ int test_unit_entry_work_2 (int argc, char *argv[])
     DPL_ASSERT_OK (dpl_entry_work_task_set (work, task));
 
     DPL_ASSERT_OK (dpl_entry_name_get (work, &string_out));
-    DPL_ASSERT_EQ (strcmp (string_out, taskname), 0);
+    DPL_ASSERT_EQ (string_out, 0);
 
     DPL_ASSERT_OK (dpl_entry_name_set (work, workname));
     DPL_ASSERT_OK (dpl_entry_name_get (work, &string_out));
-    DPL_ASSERT_EQ (strcmp (string_out, taskname), 0);
+    DPL_ASSERT_EQ (strcmp (string_out, workname), 0);
 
     DPL_ASSERT_OK (dpl_entry_free (work));
 

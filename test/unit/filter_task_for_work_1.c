@@ -16,8 +16,11 @@ int test_unit_filter_task_for_work_1 (int argc, char *argv[])
                 "  #3 Task 3\n"
                 "  #4 Task 4\n"
                 "  08:00  #2\n"
+                "    For #2\n"
                 "  09:00  #4\n"
+                "    And #4\n"
                 "  10:00  #1\n"
+                "    This for #1\n"
                 "  11:00\n"));
 
     DPL_ASSERT_OK (dpl_parse_file (DPL_tmpfile, &tasks, 0));

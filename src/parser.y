@@ -318,45 +318,67 @@ static int dpl_parse_link_check_duptask (DplParseContext *ctx,
 }
 
 
-/* Extract a task id and done flag from a work name.
+/* Extract a task id and done flag from a work description.
  *
  * DPL_OK
  *   Preconditions
- *     - The name of the work matches '^#[0-9]*'
+ *     - The description of the work contains the string '^#[0-9]*'
  *   Postconditions
  *     - taskid is set to the number '[0-9]*' in the work name
  *     - done is set to 0
  *
  * DPL_OK
  *   Preconditions
- *     - The name of the work matches '^+#[0-9]*'
+ *     - The description of the work contains the string '^+#[0-9]*', preceeded
+ *       by one of the strings "Fixes", "fixes", "Fix", "fix", "Closes", or 
+ *       "closes".
  *   Postconditions
  *     - taskid is set to the number '[0-9]*' in the work name
  *     - done is set to 1
  *
  * DPL_OK
  *   Preconditions
- *     - The name of the work does not match any of the above
+ *     - The description of the work does not contain any of the above
  *   Postconditions
  *     - taskid and done are set to 0
  */
-static int dpl_parse_link_parse_workname (DplParseContext *ctx, 
+static int dpl_parse_link_parse_workdesc (DplParseContext *ctx, 
     const DplEntry *work, uint32_t *taskid, int *done)
 {
-    const char *name;
+    const char *desc, *hashpos;
+    const char *fixstrs[] = { "Fixes", "fixes", "Fix", "fix", "Closes", 
+                              "closes" };
 
     *taskid = 0;
     *done = 0;
 
-    dpl_entry_name_get (work, &name);
+    dpl_entry_desc_get (work, &desc);
 
-    if (name && (name[0] == '#' || name[0] == '+')) {
-        if (sscanf (name, "+#%u", taskid)) {
-            *done = 1;
-        } else if (sscanf (name, "#%u", taskid)) {
-        } else {
-            *taskid = 0;
+    hashpos = desc;
+
+    while (hashpos && (hashpos = strchr (hashpos, '#'))) {
+        if (sscanf (hashpos, "#%u", taskid)) {
+            size_t i;
+            const char *pos = hashpos;
+
+            /* skip trailing whitespaces */
+            while (pos > desc && isspace (*--pos)) {
+            }
+
+            /* check for trailing keyword */
+            for (i = 0; i < sizeof (fixstrs) / sizeof (fixstrs[0]); i++) {
+                const char *fixstr = fixstrs[i];
+                int fixstrlen = strlen (fixstr);
+                const char *startpos = pos - fixstrlen + 1;
+
+                if (   (startpos >= desc)
+                    && (strncmp (startpos, fixstr, fixstrlen) == 0)) {
+                    *done = 1;
+                    break;
+                }
+            }
         }
+        hashpos += 1;
     }
 
     return DPL_OK;
@@ -470,7 +492,7 @@ static int dpl_parse_link_entries (DplParseContext *ctx)
             /* entry is a work */
             int done;
 
-            dpl_parse_link_parse_workname (ctx, entry, &taskid, &done);
+            dpl_parse_link_parse_workdesc (ctx, entry, &taskid, &done);
 
             if (!taskid) {
                 continue;

@@ -78,11 +78,7 @@ int dpl_entry_free (DplEntry *entry)
 
 int dpl_entry_name_get (const DplEntry *entry, const char **name)
 {
-    if ((entry->type == ENTRY_WORK) && entry->ext.work.task) {
-        return dpl_entry_name_get (entry->ext.work.task, name);
-    } else {
-        *name = entry->name;
-    }
+    *name = entry->name;
 
     return DPL_OK;
 }

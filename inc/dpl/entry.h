@@ -51,9 +51,7 @@ int dpl_entry_name_get (const DplEntry *entry, const char **name);
  *     - entry is allocated
  *   Postcondition
  *     - If a name was set for entry, *name points to it. If no name was set,
- *     *name is set to 0. If this entry is a work and a task is set for it,
- *     the name of the task is returned. entry keeps ownership of the returned
- *     value.
+ *     *name is set to 0.
  */
 
 int dpl_entry_name_set (DplEntry *entry, const char *name);

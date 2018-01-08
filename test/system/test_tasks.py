@@ -45,7 +45,8 @@ def test_done_oldertask():
     08:00
 
 2017-09-10
-    08:00  +#1
+    08:00  Task 1
+      Fixes #1.
     09:00
 """,
 """(done) #1 Task 1
