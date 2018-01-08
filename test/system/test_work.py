@@ -78,3 +78,13 @@ Wed Nov 15 08:00:00 2017  1h  0m  Work item
 """)
 
 
+def test_work_oneline_taskref():
+    assert_dpl_cmd_ok(["work", "--oneline"],
+"""2017-10-15
+    #1    Task
+    08:00 Work item
+        Referencing #1.
+    09:00
+""",
+"""Sun Oct 15 08:00:00 2017  1h  0m  (open) #1 Work item
+""")

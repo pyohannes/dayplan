@@ -199,8 +199,8 @@ static int dpl_print_task (const DplEntry *entry, int print_time)
     }
 
     if (task) {
-        dpl_entry_task_done_get (entry, &done);
-        dpl_entry_task_id_get (entry, &taskid);
+        dpl_entry_task_done_get (task, &done);
+        dpl_entry_task_id_get (task, &taskid);
     } else {
         done = taskid = 0;
     }
