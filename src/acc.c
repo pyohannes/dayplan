@@ -8,7 +8,7 @@
 
 int dpl_acc_durance (DplIter *iter, time_t *dur)
 {
-    DplEntry *task;
+    const DplEntry *task;
     *dur = 0;
     time_t begin, end;
 
