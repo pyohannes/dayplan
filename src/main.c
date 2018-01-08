@@ -109,7 +109,7 @@ static void dpl_print_indent (const char *s)
 }
 
 
-static void dpl_print_task_oneline (const char *name, const char *begin, 
+static void dpl_print_entry_oneline (const char *name, const char *begin, 
         const char *durance, int done, int taskid, int print_time)
 {
     if (print_time) {
@@ -132,7 +132,7 @@ static void dpl_print_task_oneline (const char *name, const char *begin,
 }
 
 
-static void dpl_print_task_multiline (const char *name, const char *desc, 
+static void dpl_print_entry_multiline (const char *name, const char *desc, 
         const char *begin, const char *durance, int done, int taskid, 
         int print_time)
 {
@@ -164,7 +164,7 @@ static void dpl_print_task_multiline (const char *name, const char *desc,
 }
 
 
-static int dpl_print_task (const DplEntry *entry, int print_time) 
+static int dpl_print_entry (const DplEntry *entry, int print_time) 
 {
 #define BUFSIZE 1024
     time_t begin, end;
@@ -206,13 +206,13 @@ static int dpl_print_task (const DplEntry *entry, int print_time)
     }
 
     if (options.oneline) {
-        dpl_print_task_oneline (name, sbegin, sdurance, done, taskid, 
+        dpl_print_entry_oneline (name, sbegin, sdurance, done, taskid, 
                 print_time);
     } else {
         const char *desc;
 
         dpl_entry_desc_get (entry, &desc);
-        dpl_print_task_multiline (name, desc, sbegin, sdurance, done, taskid, 
+        dpl_print_entry_multiline (name, desc, sbegin, sdurance, done, taskid, 
                 print_time);
     }
 
@@ -220,13 +220,14 @@ static int dpl_print_task (const DplEntry *entry, int print_time)
 }
 
 
-static int dpl_period_filter_apply (DplIter **in, DplIter **out)
+static int dpl_period_filter_apply (DplIter **in, DplIter **out, 
+        int ignore_from)
 {
     int ret = DPL_OK;
 
     if (options.tm_from || options.tm_to) {
-        ret = dpl_filter_period (*in, options.tm_from, options.tm_to, 
-                out);
+        ret = dpl_filter_period (*in, ignore_from ? 0 : options.tm_from, 
+                options.tm_to, out);
     } else {
         *out = *in;
         *in = 0;
@@ -260,7 +261,7 @@ static int dpl_print_sums (DplList *entries)
     DPL_FORWARD_ERROR (dpl_list_iter (entries, &i_full));
 
     if (   (ret = dpl_filter_type (i_full, ENTRY_WORK, &i_task)) == DPL_OK
-        && (ret = dpl_period_filter_apply (&i_task, &i_dest)) == DPL_OK
+        && (ret = dpl_period_filter_apply (&i_task, &i_dest, 0)) == DPL_OK
         && (ret = dpl_group_apply (i_dest, &first)) == DPL_OK) {
         DplGroup *group = first;
 
@@ -312,7 +313,7 @@ static int dpl_print_task_list (DplList *entries, int done)
 
     DPL_FORWARD_ERROR (dpl_list_iter (entries, &i_full));
 
-    if (dpl_period_filter_apply (&i_full, &i_time) != DPL_OK) {
+    if (dpl_period_filter_apply (&i_full, &i_time, !done) != DPL_OK) {
         dpl_iter_free (i_full);
         return DPL_ERR_MEM;
     }
@@ -333,7 +334,7 @@ static int dpl_print_task_list (DplList *entries, int done)
 
     if (ret == DPL_OK) {
         while ((ret = dpl_iter_next (i_dest, &entry)) == DPL_OK) {
-            if ((ret = dpl_print_task (entry, 0)) != DPL_OK) {
+            if ((ret = dpl_print_entry (entry, 0)) != DPL_OK) {
                 break;
             }
         }
@@ -370,9 +371,9 @@ static int dpl_print_work (DplList *entries)
 
     if (   dpl_list_iter (entries, &i_full) == DPL_OK
         && dpl_filter_type (i_full, ENTRY_WORK, &i_work) == DPL_OK
-        && dpl_period_filter_apply (&i_work, &i_time) == DPL_OK) {
+        && dpl_period_filter_apply (&i_work, &i_time, 0) == DPL_OK) {
         while ((ret = dpl_iter_next (i_time, &entry)) == DPL_OK) {
-            if ((ret = dpl_print_task (entry, 1)) != DPL_OK) {
+            if ((ret = dpl_print_entry (entry, 1)) != DPL_OK) {
                 break;
             }
         }
