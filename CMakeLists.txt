@@ -63,6 +63,10 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/parse_task_list_end_2
               test/unit/parse_task_list_ref_conflict_1
               test/unit/parse_task_list_newlinesep_1
+              test/unit/parse_work_refstr_name
+              test/unit/parse_work_closestr_name
+              test/unit/parse_work_refstr_desc
+              test/unit/parse_work_closestr_desc
               test/unit/time_fmt_durance
               test/unit/parse_ref_list_1
               test/unit/acc_durance_1

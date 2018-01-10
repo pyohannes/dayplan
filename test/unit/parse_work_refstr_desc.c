@@ -1,7 +1,7 @@
 #include "dpl_test.h"
 
 
-int test_unit_parse_work_refstr (int argc, char *argv[])
+int test_unit_parse_work_refstr_desc (int argc, char *argv[])
 {
     DplList *tasks;
     DplIter *iter, *iter_all;

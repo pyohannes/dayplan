@@ -318,67 +318,88 @@ static int dpl_parse_link_check_duptask (DplParseContext *ctx,
 }
 
 
-/* Extract a task id and done flag from a work description.
+/* Extract a task id and done flag from a string.
  *
- * DPL_OK
- *   Preconditions
- *     - The description of the work contains the string '^#[0-9]*'
- *   Postconditions
- *     - taskid is set to the number '[0-9]*' in the work name
- *     - done is set to 0
+ * The string text is scanned for a task id (a hash followed by an integer). If
+ * a task id is found, the id is stored in *taskid. If the task id is preceeded
+ * by one of the strings "Fixes", "fixes", "Fix", "fix", "Closes", or "closes",
+ * *done is set to 1. If no such string is found, *done is set to 0.
  *
- * DPL_OK
- *   Preconditions
- *     - The description of the work contains the string '^+#[0-9]*', preceeded
- *       by one of the strings "Fixes", "fixes", "Fix", "fix", "Closes", or 
- *       "closes".
- *   Postconditions
- *     - taskid is set to the number '[0-9]*' in the work name
- *     - done is set to 1
+ * The values *taskid and *done relate to the last task id found.
  *
- * DPL_OK
- *   Preconditions
- *     - The description of the work does not contain any of the above
- *   Postconditions
- *     - taskid and done are set to 0
+ * If no task id is found, *taskid is not overwritten.
+ *
+ * The parameter text must be initialized.
+ *
+ * This function always returns DPL_OK.
  */
-static int dpl_parse_link_parse_workdesc (DplParseContext *ctx, 
-    const DplEntry *work, uint32_t *taskid, int *done)
+static int dpl_parse_find_task_refstr (const char *text, uint32_t *taskid, int
+    *done)
 {
-    const char *desc, *hashpos;
     const char *fixstrs[] = { "Fixes", "fixes", "Fix", "fix", "Closes", 
                               "closes" };
-
-    *taskid = 0;
-    *done = 0;
-
-    dpl_entry_desc_get (work, &desc);
-
-    hashpos = desc;
+    const char *hashpos = text;
 
     while (hashpos && (hashpos = strchr (hashpos, '#'))) {
         if (sscanf (hashpos, "#%u", taskid)) {
             size_t i;
             const char *pos = hashpos;
 
+            *done = 0;
+
             /* skip trailing whitespaces */
-            while (pos > desc && isspace (*--pos)) {
+            while (pos > text && isspace (*--pos)) {
             }
 
             /* check for trailing keyword */
             for (i = 0; i < sizeof (fixstrs) / sizeof (fixstrs[0]); i++) {
-                const char *fixstr = fixstrs[i];
-                int fixstrlen = strlen (fixstr);
+                int fixstrlen = strlen (fixstrs[i]);
                 const char *startpos = pos - fixstrlen + 1;
 
-                if (   (startpos >= desc)
-                    && (strncmp (startpos, fixstr, fixstrlen) == 0)) {
+                if (   (startpos >= text)
+                    && (strncmp (startpos, fixstrs[i], fixstrlen) == 0)) {
                     *done = 1;
                     break;
                 }
             }
         }
         hashpos += 1;
+    }
+
+    return DPL_OK;
+}
+
+
+/* Check for task references in the work entry.
+ *
+ * If a reference to a task is found either in the name or in the description
+ * of the work entry, *taskid is set to the referenced id. If the task id is
+ * additionally marked as closed in the name or the description, *done is set
+ * to 1.
+ *
+ * If no task id is found, *task and *done are 0. If a task id is found, but is
+ * not marked as closed, *done is set to 0.
+ *
+ * The values *taskid and *done relate to the last task id found. The name of
+ * the entry is processed before its description.
+ *
+ * The parameters ctx and work must be initialized.
+ *
+ * This function always returns DPL_OK.
+ */
+static int dpl_parse_link_parse_work (DplParseContext *ctx, 
+    const DplEntry *work, uint32_t *taskid, int *done)
+{
+    const char *text[2];
+
+    *taskid = 0;
+    *done = 0;
+
+    dpl_entry_name_get (work, &(text[0]));
+    dpl_entry_desc_get (work, &(text[1]));
+
+    for (size_t i = 0; i < sizeof (text) / sizeof (text[0]); i++) {
+        dpl_parse_find_task_refstr (text[i], taskid, done);
     }
 
     return DPL_OK;
@@ -492,7 +513,7 @@ static int dpl_parse_link_entries (DplParseContext *ctx)
             /* entry is a work */
             int done;
 
-            dpl_parse_link_parse_workdesc (ctx, entry, &taskid, &done);
+            dpl_parse_link_parse_work (ctx, entry, &taskid, &done);
 
             if (!taskid) {
                 continue;
