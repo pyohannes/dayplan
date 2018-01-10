@@ -24,8 +24,8 @@ int test_unit_entry_task_1 (int argc, char *argv[])
     DPL_ASSERT_EQ (time_out, 0);
     DPL_ASSERT_OK (dpl_entry_task_id_get (task, &id_out));
     DPL_ASSERT_EQ (id_out, 0);
-    DPL_ASSERT_OK (dpl_entry_task_done_get (task, &task_out));
-    DPL_ASSERT_EQ (task_out, 0);
+    DPL_ASSERT_OK (dpl_entry_task_done_get (task, &done_out));
+    DPL_ASSERT_EQ (done_out, 0);
 
     DPL_ASSERT_EQ (dpl_entry_work_end_get (task, &time_out), DPL_ERR_TYPE);
     DPL_ASSERT_EQ (dpl_entry_work_task_get (task, &task_out), DPL_ERR_TYPE);

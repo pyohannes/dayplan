@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 
+set (DAYPLAN_VERSION "0.1")
+
+
+configure_file (
+    "inc/dpl/dplversion.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/dplversion.h")
+
 
 if (NOT WIN32)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -pedantic -Wextra")
@@ -24,11 +31,13 @@ set (SOURCES src/entry.c
              src/acc.c
              src/group.c
              src/error.c
+             src/version.c
              ${BISON_dpl_parser_OUTPUTS}
 )
 
 
-include_directories (inc)
+include_directories (inc
+                     ${CMAKE_CURRENT_BINARY_DIR})
 
 
 add_executable (dayplan src/main.c ${SOURCES})
@@ -73,6 +82,7 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/group_by_day_1
               test/unit/group_by_title_1
               test/unit/skip_whitespaces_1
+              test/unit/version
 )
 
 set (TEST_SOURCE_LIST)
@@ -97,4 +107,4 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties (
     test/system 
-    PROPERTIES ENVIRONMENT "PATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PATH}")
+    PROPERTIES ENVIRONMENT "PATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PATH};DAYPLAN_VERSION=${DAYPLAN_VERSION}")

@@ -36,6 +36,7 @@ static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "\n"
 "The following options are supported:\n"
 "  -h, --help         Print this help text.\n"
+"  -v, --version      Print version information.\n"
 "  -f, --file FILE    Read data from given file FILE. This option is\n"
 "                     obligatory.\n"
 "  -t, --today        Only process today's entries.\n"
@@ -413,6 +414,7 @@ static int dpl_parse_arguments (int argc, char *argv[])
         { "group-by-day", 0, 0, 'g' },
         { "strict", 0, 0, 's' },
         { "help", 0, 0, 'h' },
+        { "version", 0, 0, 'v' },
         { 0, 0, 0, 0 }
     };
 
@@ -430,7 +432,7 @@ static int dpl_parse_arguments (int argc, char *argv[])
     tm.tm_isdst = daylight; \
 }
 
-    while ((c = getopt_long (argc, argv, "thosrad:b:c:f:g", long_options, 
+    while ((c = getopt_long (argc, argv, "thvosrad:b:c:f:g", long_options, 
                     &option_index)) != -1) {
         switch (c) {
             case 'f':
@@ -463,7 +465,15 @@ static int dpl_parse_arguments (int argc, char *argv[])
                 break;
             case 'h':
                 printf (usage);
-                return 0;
+                return DPL_EXIT;
+            case 'v': {
+                    const char *version;
+
+                    dpl_version (&version);
+                    printf ("dayplan version %s\n", version);
+
+                    return DPL_EXIT;
+                }
             case 'o':
                 options.oneline = 1;
                 break;
@@ -560,8 +570,13 @@ int main (int argc, char *argv[])
 
     dpl_check_color_output ();
 
-    if (dpl_parse_arguments (argc, argv) != DPL_OK) {
-        return 1;
+    switch (dpl_parse_arguments (argc, argv)) {
+        case DPL_EXIT:
+            return 0;
+        case DPL_OK:
+            break;
+        default:
+            return 1;
     }
 
     if (dpl_parse_main (&entries) != DPL_OK) {

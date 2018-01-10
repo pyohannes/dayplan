@@ -1,0 +1,10 @@
+/* +
+ */
+
+
+#ifndef DPL_VERSION_H
+# define DPL_VERSION_H
+
+# define DPL_VERSION "${DAYPLAN_VERSION}"
+
+#endif /* DPL_VERSION_H */

@@ -12,6 +12,7 @@
 # include "dpl/time.h"
 # include "dpl/group.h"
 # include "dpl/acc.h"
+# include "dpl/version.h"
 
 
 #endif /* DPL_H */
