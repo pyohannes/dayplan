@@ -537,44 +537,75 @@ dpl_parse_link_entries_error:
 }
 
 
+/* Extract name and category from a given string.
+ *
+ * The given string has the format '\w*(.*)\w.*', whereas the string inside
+ * parantheses is the category and the remaining string after the parentheses
+ * is the name of the entry.
+ *
+ * A pointer to the beginning of the category is stored in cat, a pointer to
+ * the beginnin of name is stored in name. Both category and name are
+ * 0-terminated and whitespaces are stripped. This is done by altering the
+ * string s.
+ *
+ * Parameter
+ *   @s The input string. This must not be 0. This will be altered in the
+ *      process.
+ *   @name A pointer to the 0-terminated name string.
+ *   @cat A pointer to the 0-terminated category string.
+ *
+ * Return
+ *   DPL_OK always.
+ */
+static int dpl_parse_name_category (char *s, char **name, char **cat)
+{
+    char *n = dpl_skip_whitespaces (s);
+
+    if (*n == '(') {
+        *cat = n = dpl_skip_whitespaces (++n);
+    
+        while (*n && *n != ')') {
+            n++;
+        }
+        *n++ = '\0';
+    }
+
+    *name = dpl_skip_whitespaces (n);
+
+    return DPL_OK;
+}
+
+
 /* Create a new entry.
  *
- * Preconditions
- *   - ctx is allocated
+ * A new entry is allocated, assigned to ctx->current and appended to
+ * ctx->entries. Time, name and * category are set according to the information 
+ * in ctx->current.
  *
- * DPL_ERR_MEM
- *   Preconditions
- *     - memory cannot be allocated
+ * Parameters
+ *   @ctx This must be allocated.
+ *   @type The type of the entry to be created.
  *
- * Preconditions
- *   - memory can be allocated
- *
- * Postconditions
- *   - ctx->current is assigned to a newly allocated entry object
- *   - the begin time of ctx->current is set to ctx->tm
- *   - ctx->current is appended to ctx->entries
- *
- * DPL_OK
- *   Preconditions
- *     - ctx->textpos is 0
- *
- * DPL_OK
- *   Preconditions
- *     - ctx->textpos is not 0
- *   Postconditions
- *     - the name of ctx->current is assigned to ctx->text[0:ctx->textpos]
- *     - whitspaces in trimmed from ctx->text
+ * Returns
+ *   DPL_OK on success, DPL_ERR_MEM if memory cannot be allocated.
  */
 static int dpl_parse_entry_new (DplParseContext *ctx, DplEntryType type)
 {
+    char *name = 0, *category = 0;
+
     DPL_FORWARD_ERROR (dpl_entry_new (&ctx->current, type));
     ctx->tm.tm_isdst = -1;
     DPL_FORWARD_ERROR (dpl_entry_begin_set (ctx->current, mktime (&ctx->tm)));
+
     if (ctx->textpos) {
         DPL_ADD_CHAR(ctx, 0);
-        DPL_FORWARD_ERROR (dpl_entry_name_set (ctx->current, 
-            dpl_skip_whitespaces (ctx->text)));
+
+        dpl_parse_name_category (ctx->text, &name, &category);
+
+        DPL_FORWARD_ERROR (dpl_entry_category_set (ctx->current, category));
+        DPL_FORWARD_ERROR (dpl_entry_name_set (ctx->current, name));
     }
+
     DPL_FORWARD_ERROR (dpl_list_push (ctx->entries, ctx->current));
 
     return DPL_OK;

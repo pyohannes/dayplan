@@ -9,7 +9,7 @@ def test_date_space():
     #1  Task 1
     08:00
 """,
-"""(open) #1 Task 1
+"""[open] #1 Task 1
 """)
 
 

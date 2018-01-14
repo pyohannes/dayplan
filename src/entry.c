@@ -27,6 +27,7 @@ struct DplEntry_
 {
     char *name;
     char *desc;
+    char *cat;
     time_t begin;
     DplEntryType type;
     union {
@@ -45,6 +46,7 @@ int dpl_entry_new (DplEntry **entry, DplEntryType type)
 
     (*entry)->name = 0;
     (*entry)->desc = 0;
+    (*entry)->cat = 0;
     (*entry)->begin = 0;
     (*entry)->type = type;
 
@@ -68,6 +70,9 @@ int dpl_entry_free (DplEntry *entry)
     if (entry->desc) {
         free (entry->desc);
     }
+    if (entry->cat) {
+        free (entry->cat);
+    }
 
     free (entry);
 
@@ -89,6 +94,18 @@ int dpl_entry_desc_get (const DplEntry *entry, const char **desc)
     *desc = entry->desc;
 
     return DPL_OK;
+}
+
+
+int dpl_entry_category_get (const DplEntry *entry, const char **cat)
+{
+    if (!entry->cat && entry->type == ENTRY_WORK && entry->ext.work.task) {
+        return dpl_entry_category_get (entry->ext.work.task, cat);
+    } else {
+        *cat = entry->cat;
+
+        return DPL_OK;
+    }
 }
 
 
@@ -139,6 +156,14 @@ int dpl_entry_name_set (DplEntry *entry, const char *name)
 int dpl_entry_desc_set (DplEntry *entry, const char *desc)
 {
     DPL_STRDUP (entry->desc, desc);
+
+    return DPL_OK;
+}
+
+
+int dpl_entry_category_set (DplEntry *entry, const char *cat)
+{
+    DPL_STRDUP (entry->cat, cat);
 
     return DPL_OK;
 }

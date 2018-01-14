@@ -122,6 +122,35 @@ int dpl_entry_desc_set (DplEntry *entry, const char *desc);
  *   Postcondition
  *     - The description of the entry is 0.
  */
+
+/* Get the category of an entry.
+ *
+ * Parameters
+ *    @entry An allocated DplEntry.
+ *    @cat This is set to point to the category of the entry or to 0 if none 
+ *         was set.
+ *
+ * Returns
+ *    DPL_OK always.
+ */
+int dpl_entry_category_get (const DplEntry *entry, const char **cat);
+
+/* Set the category of an entry.
+ *
+ * If this entry if of type ENTRY_WORK, if its category is not set and if it is
+ * linked to a task, this call returns the category of the linked task.
+ *
+ * Ownership of cat is not taken, but an internal copy is made.
+ *
+ * Parameters
+ *    @entry An allocated DplEntry.
+ *    @cat The new category for the entry.
+ *
+ * Returns
+ *    DPL_OK on success, DPL_ERR_MEM if memory cannot be allocated.
+ */
+int dpl_entry_category_set (DplEntry *entry, const char *cat);
+
 int dpl_entry_type_get (const DplEntry *entry, DplEntryType *type);
 /* Return the type of an entry.
  *

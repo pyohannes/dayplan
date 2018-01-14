@@ -33,7 +33,7 @@ def test_task_id():
     #1  Task 1
     08:00
 """,
-"""(open) #1 Task 1
+"""[open] #1 Task 1
 """)
 
 
@@ -49,7 +49,7 @@ def test_done_oldertask():
       Fixes #1.
     09:00
 """,
-"""(done) #1 Task 1
+"""[done] #1 Task 1
 """)
 
 
@@ -64,5 +64,15 @@ def test_open_oldertask():
     08:00  Unrelated to Task 1
     09:00
 """,
-"""(open) #1 Task 1
+"""[open] #1 Task 1
+""")
+
+
+def test_task_category():
+    assert_dpl_cmd_ok(["tasks", "--oneline"],
+"""2017-09-09
+    #1  (job/coding) Task 1
+    08:00
+""",
+"""[open] #1 (job/coding) Task 1
 """)

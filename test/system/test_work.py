@@ -86,5 +86,29 @@ def test_work_oneline_taskref():
         Referencing #1.
     09:00
 """,
-"""Sun Oct 15 08:00:00 2017  1h  0m  (open) #1 Work item
+"""Sun Oct 15 08:00:00 2017  1h  0m  [open] #1 Work item
+""")
+
+
+def test_work_category():
+    assert_dpl_cmd_ok(["work", "--oneline"],
+"""2017-10-15
+    08:00 (job/coding) Work item
+    09:00
+""",
+"""Sun Oct 15 08:00:00 2017  1h  0m  (job/coding) Work item
+""")
+
+
+def test_work_categoryref():
+    assert_dpl_cmd_ok(["work", "--oneline"],
+"""2017-10-15
+    #1 (job/coding) Coding
+    08:00  Work item
+        Referencing #1.
+    09:00 (job/testing) Test #1
+    10:00
+""",
+"""Sun Oct 15 08:00:00 2017  1h  0m  [open] #1 (job/coding) Work item
+Sun Oct 15 09:00:00 2017  1h  0m  [open] #1 (job/testing) Test #1
 """)

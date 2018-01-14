@@ -110,19 +110,24 @@ static void dpl_print_indent (const char *s)
 }
 
 
-static void dpl_print_entry_oneline (const char *name, const char *begin, 
-        const char *durance, int done, int taskid, int print_time)
+static void dpl_print_entry_oneline (const char *name, const char *category,
+        const char *begin, const char *durance, int done, int taskid, 
+        int print_time)
 {
     if (print_time) {
         printf ("%s%s%s %7s  ", C_YELLOW, begin, C_DEFAULT, durance);
     }
     if (taskid) {
-            printf ("%s(%s) %s#%d%s ", 
+            printf ("%s[%s] %s#%d%s ", 
                     done ? C_CYAN : C_RED,
                     done ? "done" : "open",
                     C_GREY,
                     taskid,
                     C_DEFAULT);
+    }
+
+    if (category) {
+        printf ("(%s) ", category);
     }
 
     if (name) {
@@ -169,7 +174,7 @@ static int dpl_print_entry (const DplEntry *entry, int print_time)
 {
 #define BUFSIZE 1024
     time_t begin, end;
-    const char *name;
+    const char *name, *category;
     char sbegin[BUFSIZE];
     char sdurance[BUFSIZE];
     const DplEntry *task;
@@ -178,6 +183,7 @@ static int dpl_print_entry (const DplEntry *entry, int print_time)
 
     dpl_entry_begin_get (entry, &begin);
     dpl_entry_name_get (entry, &name);
+    dpl_entry_category_get (entry, &category);
 
     if (dpl_entry_work_end_get (entry, &end) == DPL_ERR_TYPE) {
         end = begin;
@@ -207,7 +213,7 @@ static int dpl_print_entry (const DplEntry *entry, int print_time)
     }
 
     if (options.oneline) {
-        dpl_print_entry_oneline (name, sbegin, sdurance, done, taskid, 
+        dpl_print_entry_oneline (name, category, sbegin, sdurance, done, taskid, 
                 print_time);
     } else {
         const char *desc;
