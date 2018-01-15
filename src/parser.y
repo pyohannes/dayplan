@@ -164,6 +164,27 @@ static int dpl_parse_warning (DplParseContext *ctx, const char *s)
 }
 
 
+/* Issue a warning and return if strict parsing is set.
+ *
+ * Parameters
+ *   @ctx An initialized context.
+ *   @fmt A format string.
+ *   ... Arguments for a format string.
+ *
+ * Returns
+ *   Returns from the calling function with DPL_ERR_INPUT if strict parsing is
+ *   set.
+ */
+#define DPL_WARN(DPL_ctx, DPL_fmt, ...) {\
+    char errmsg[1024]; \
+    snprintf (errmsg, 1024, DPL_fmt, __VA_ARGS__); \
+    if (dpl_parse_warning (DPL_ctx, errmsg) != DPL_OK) { \
+        return DPL_ERR_INPUT; \
+    } \
+}
+    
+
+
 /* Set correct end times for all work entries.
  *
  * DPL_OK
@@ -301,12 +322,7 @@ static int dpl_parse_link_check_duptask (DplParseContext *ctx,
 
         dpl_entry_task_id_get (task, &id);
         if (id == taskid) {
-            char errmsg[1024];
-            snprintf (errmsg, 1024, "Duplicate task id #%d", id);
-            if (dpl_parse_warning (ctx, errmsg) != DPL_OK) {
-                dpl_iter_free (iter);
-                return DPL_ERR_INPUT;
-            }
+            DPL_WARN(ctx, "Duplicate task id #%d", id);
         }
     }
 
@@ -329,22 +345,34 @@ static int dpl_parse_link_check_duptask (DplParseContext *ctx,
  *
  * If no task id is found, *taskid is not overwritten.
  *
+ * If two different task ids is found (or the first found task id differs from
+ * the one already stored in taskid) a warning is issued.
+ *
  * The parameter text must be initialized.
  *
- * This function always returns DPL_OK.
+ * Returns DPL_OK on success. If a conflicting task ids were found and strict
+ * parsing is enabled, DPL_ERR_INPUT is returned.
  */
-static int dpl_parse_find_task_refstr (const char *text, uint32_t *taskid, int
-    *done)
+
+static int dpl_parse_find_task_refstr (DplParseContext *ctx, const char *text, 
+    uint32_t *taskid, int *done)
 {
     const char *fixstrs[] = { "Fixes", "fixes", "Fix", "fix", "Closes", 
                               "closes" };
     const char *hashpos = text;
+    uint32_t id;
 
     while (hashpos && (hashpos = strchr (hashpos, '#'))) {
-        if (sscanf (hashpos, "#%u", taskid)) {
+        if (sscanf (hashpos, "#%u", &id)) {
             size_t i;
             const char *pos = hashpos;
 
+            if (*taskid && *taskid != id) {
+                DPL_WARN(ctx, "Conflicting task ids: #%d and #%d", id, 
+                    *taskid);
+            }
+
+            *taskid = id;
             *done = 0;
 
             /* skip trailing whitespaces */
@@ -399,7 +427,8 @@ static int dpl_parse_link_parse_work (DplParseContext *ctx,
     dpl_entry_desc_get (work, &(text[1]));
 
     for (size_t i = 0; i < sizeof (text) / sizeof (text[0]); i++) {
-        dpl_parse_find_task_refstr (text[i], taskid, done);
+        DPL_FORWARD_ERROR (dpl_parse_find_task_refstr (ctx, text[i], taskid, 
+            done));
     }
 
     return DPL_OK;
@@ -408,44 +437,42 @@ static int dpl_parse_link_parse_work (DplParseContext *ctx,
 
 /* Try to link a work entry to an open task entry.
  *
- * DPL_ERR_MEM
- *   Preconditions
- *     - Memory cannot be allocated
+ * The name and description for the work entry are parsed for task references
+ * and done flags. If a task reference is found, the list of open tasks is 
+ * searched for a task with the matching id. If found, the work entry is 
+ * linked to the task. If, in addition, a done flag was found, the task is set
+ * to done and removed from the list of open tasks.
  *
- * Preconditions
- *   - ctx, work and tasks_open are allocated
- *   - work is of type ENTRY_WORK
- *   - all items in tasks_open are of type ENTRY_TASK
- *   - Memory can be allocated
- * 
- * DPL_OK
- *   Precondition
- *     - tasks_open contains a task entry with task id id_ref
- *     - done is 0
- *   Postconditions
- *     - work is linked to the task with id id_ref
+ * Parameters
+ *   @ctx An initialized context.
+ *   @work An initialized work entry.
+ *   @tasks_open A list of open tasks.
  *
- * DPL_OK
- *   Precondition
- *     - tasks_open contains a task entry with task id id_ref
- *     - done is not 0
- *   Postconditions
- *     - work is linked to the task with id id_ref
- *     - the task with the id id_ref is set to done
- *     - the task with the id id_ref is removed from tasks_open
+ * Returns
+ *   DPL_ERR_MEM if no memory can be allocated, DPL_ERR_INPUT if conflicting
+ *   task ids are found in the work entries description and name and strict
+ *   parsing is enabled. DPL_OK on success.
  */
 static int dpl_parse_link_work (DplParseContext *ctx, const DplEntry *work,
-    uint32_t id_ref, int done, DplList *tasks_open)
+    DplList *tasks_open)
 {
     DplIter *iter;
     const DplEntry *task;
+    int done;
+    uint32_t taskid;
+
+    DPL_FORWARD_ERROR (dpl_parse_link_parse_work (ctx, work, &taskid, &done));
+
+    if (!taskid) {
+        return DPL_OK;
+    }
 
     DPL_FORWARD_ERROR (dpl_list_iter (tasks_open, &iter));
     while (dpl_iter_next (iter, &task) == DPL_OK) {
         uint32_t id;
 
         dpl_entry_task_id_get (task, &id);
-        if (id_ref == id) {
+        if (taskid == id) {
             dpl_entry_work_task_set ((DplEntry *)work, task);
             if (done) {
                 dpl_entry_task_done_set ((DplEntry *)task, 1);
@@ -463,34 +490,17 @@ static int dpl_parse_link_work (DplParseContext *ctx, const DplEntry *work,
 
 /* Link tasks and work items and check for duplicate tasks.
  *
- * Preconditions
- *   - ctx is allocated
- *   - ctx->entries contains a list of entry objects
- *   - ctx->entries is sorted by begin time
+ * Iterates trough the entry list, removes duplicate tasks and links work
+ * entries to referenced tasks.
  *
- * DPL_ERR_MEM
- *   Preconditions
- *     - Memory cannot be allocated
- *
- * Preconditions
- *   - Memory can be allocated
- *
- * DPL_ERR_INPUT
- *   Preconditions
- *     - ctx->strict is not 0
- *     - ctx->entries contains two task entries with the same id
- *
- * DPL_OK
- *   Preconditions
- *     - ctx->strict is 0 or ctx->entries contains no two tasks with the same
- *       id
- *   Postconditions
- *     - Work entries in ctx->entries with a task id in the name are linked to
- *       the task with the id if it is not done at the begin time of the work
- *       entry
- *     - Task entries in ctx->entries are set to done if a work entry is found
- *       that marks the task as done and the task is not done at the begin time
- *       of the work entry
+ * Parameters
+ *   @ctx An initialized context.
+ * 
+ * Returns
+ *   DPL_OK on success.
+ *   DPL_ERR_MEM if memory cannot be allocated.
+ *   DPL_ERR_INPUT if strict parsing is set and duplicate or conflicting task
+ *     ids are found.
  */
 static int dpl_parse_link_entries (DplParseContext *ctx)
 {
@@ -507,19 +517,11 @@ static int dpl_parse_link_entries (DplParseContext *ctx)
     }
 
     while (dpl_iter_next (iter, &entry) == DPL_OK) {
-        uint32_t taskid;
+        uint32_t taskid = 0;
 
         if (dpl_entry_task_id_get (entry, &taskid) == DPL_ERR_TYPE) {
             /* entry is a work */
-            int done;
-
-            dpl_parse_link_parse_work (ctx, entry, &taskid, &done);
-
-            if (!taskid) {
-                continue;
-            }
-
-            ret = dpl_parse_link_work (ctx, entry, taskid, done, tasks_open);
+            ret = dpl_parse_link_work (ctx, entry, tasks_open);
         } else {
             ret = dpl_parse_link_check_duptask (ctx, entry, tasks_open);
         }

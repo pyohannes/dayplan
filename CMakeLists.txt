@@ -77,6 +77,7 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/parse_work_closestr_name
               test/unit/parse_work_refstr_desc
               test/unit/parse_work_closestr_desc
+              test/unit/parse_work_refstr_1
               test/unit/parse_category
               test/unit/time_fmt_durance
               test/unit/parse_ref_list_1
