@@ -67,29 +67,20 @@ int dpl_group_entries_get (const DplGroup *group, DplIter **iter);
  */
 
 
-int dpl_group_by_title (DplIter *iter, DplGroup **first);
-/* Group entries by title.
+/* Group entries by name.
  *
- * Every group contains entries that have the same title or are in the same
- * category. An entry can be in multiple groups.
+ * Every group contains entries that have the same name.
+ * 
+ * Name groups are ordered alphabetically.
  *
- * Preconditions
- *  - iter is an initialized iterator.
+ * Parameters
+ *   @iter An initialized iterator.
+ *   @first This is set to point to the first group that is created.
  *
- * DPL_OK
- *   Preconditions
- *     - Memory can be allocated
- *   Postconditions
- *     - *first contains a list of groups, in lexicographically ascending
- *     order. 
- *     - Every group contains entries of the same name of the same
- *     category.
- *     - All entries returned by iter are considered.
- *
- * DPL_ERR_MEM
- *   Preconditions
- *     - Memory cannot be allocated
+ * Returns
+ *   DPL_OK on success, DPL_ERR_MEM if not enough memory can be allocated.
  */
+int dpl_group_by_name (DplIter *iter, DplGroup **first);
 
 
 int dpl_group_by_day (DplIter *iter, DplGroup **first);
@@ -119,6 +110,24 @@ int dpl_group_by_day (DplIter *iter, DplGroup **first);
  *     - The begin time of an entry contained an invalid value, or the
  *     begin time value cannot be converted to a string.
  */
+
+
+/* Group entries by category.
+ *
+ * Every group represents a category and contains entries of the category and
+ * its subcategories. Subcategories in category names are introduced with a
+ * slash (e. g. "job/project/a").
+ *
+ * Category groups are ordered alphabetically.
+ *
+ * Parameters
+ *   @iter An initialized iterator.
+ *   @first This is set to point to the first group that is created.
+ *
+ * Returns
+ *   DPL_OK on success, DPL_ERR_MEM if not enough memory can be allocated.
+ */
+int dpl_group_by_category (DplIter *iter, DplGroup **first);
 
 
 #endif /* DAYPLAN_GROUP_H */

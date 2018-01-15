@@ -186,38 +186,62 @@ static int _dpl_group_add_for_name (const char *name, const DplEntry *entry,
 }
 
 
-int dpl_group_by_title (DplIter *iter, DplGroup **first)
+int dpl_group_by_name (DplIter *iter, DplGroup **first)
 {
     const DplEntry *entry;
-    const char *title;
-    int titlepart_size = 1024;
-    char *titlepart = malloc (titlepart_size + 1);
+    const char *name;
 
     *first = 0;
 
     while (dpl_iter_next (iter, &entry) == DPL_OK) {
         int pos;
 
-        dpl_entry_name_get (entry, &title);
-        DPL_STRCPY (titlepart, title, titlepart_size);
+        dpl_entry_name_get (entry, &name);
+        name = name ? name : "";
+
+        DPL_FORWARD_ERROR (_dpl_group_add_for_name (name, entry, first));
+    }
+
+    return DPL_OK;
+}
+
+
+int dpl_group_by_category (DplIter *iter, DplGroup **first)
+{
+    const DplEntry *entry;
+    const char *cat; 
+    char *catpart = 0;
+    int catpart_size = 0;
+
+    *first = 0;
+
+    while (dpl_iter_next (iter, &entry) == DPL_OK) {
+        int pos;
+
+        dpl_entry_category_get (entry, &cat);
+        cat = cat ? cat : "";
 
         /* full word */
-        DPL_FORWARD_ERROR (_dpl_group_add_for_name (title, entry, first));
+        DPL_FORWARD_ERROR (_dpl_group_add_for_name (cat, entry, first));
 
-        /* add partial words (categories) */
-        pos = strlen (titlepart);
+        /* add to super-categories */
+        DPL_STRCPY (catpart, cat, catpart_size);
+        pos = strlen (catpart);
         while (pos) {
-            if (titlepart[pos] == '/') {
-                titlepart[pos] = '\0';
+            if (catpart[pos] == '/') {
+                catpart[pos] = '\0';
                 DPL_FORWARD_ERROR (
-                        _dpl_group_add_for_name (titlepart, entry, first));
+                        _dpl_group_add_for_name (catpart, entry, first));
             }
             pos -= 1;
         }
 
     }
 
-    free (titlepart);
+    if (catpart) {
+        free (catpart);
+    }
+
     return DPL_OK;
 }
 

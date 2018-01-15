@@ -48,8 +48,18 @@ static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "  -c, --date-to DATE Only process entries before and including the given date.\n"
 "  -o, --oneline      Print all task information in one line.\n"
 "  -s, --strict       Turn warnings into errors.\n"
-"  -g, --group-by-day Group accumulated sums by days, not by tasks.\n"
+"  -g, --group-by name|day|category\n"
+"                     Group accumulated sums by days, entry names or entry \n"
+"                     categories. The default is 'name'.\n"
 "";
+
+
+/* Possible aggregation options for sums */
+enum DplGroupBy {
+    G_NAME,
+    G_DAY,
+    G_CATEGORY
+};
 
 
 /* Global struct to hold information from command line options. */
@@ -64,8 +74,8 @@ static struct {
     /* If set to 1 print entries in a short one-line form. */
     int oneline;
 
-    /* If set to 1 group sums by day. */
-    int group_by_day;
+    /* Determines how sums are aggregated */
+    enum DplGroupBy group_by;
 
     /* If set to 1 treat parser warnings as errors. */
     int strict;
@@ -77,7 +87,7 @@ static struct {
     0, /* tm_from */
     0, /* tm_to */
     0, /* oneline */
-    0, /* group_by_day */
+    G_NAME, /* group_by */
     0, /* strict */
     0, /* input */
 };
@@ -246,10 +256,16 @@ static int dpl_period_filter_apply (DplIter **in, DplIter **out,
 
 static int dpl_group_apply (DplIter *iter, DplGroup **group)
 {
-    if (options.group_by_day) {
-        DPL_FORWARD_ERROR (dpl_group_by_day (iter, group));
-    } else {
-        DPL_FORWARD_ERROR (dpl_group_by_title (iter, group));
+    switch (options.group_by) {
+        case G_DAY: 
+            DPL_FORWARD_ERROR (dpl_group_by_day (iter, group));
+            break;
+        case G_CATEGORY: 
+            DPL_FORWARD_ERROR (dpl_group_by_category (iter, group));
+            break;
+        default:
+            DPL_FORWARD_ERROR (dpl_group_by_name (iter, group));
+            break;
     }
     
     return DPL_OK;
@@ -417,7 +433,7 @@ static int dpl_parse_arguments (int argc, char *argv[])
         { "date-to", 1, 0, 'c' },
         { "oneline", 0, 0, 'o' },
         { "file", 1, 0, 'f' },
-        { "group-by-day", 0, 0, 'g' },
+        { "group-by", 1, 0, 'g' },
         { "strict", 0, 0, 's' },
         { "help", 0, 0, 'h' },
         { "version", 0, 0, 'v' },
@@ -484,7 +500,16 @@ static int dpl_parse_arguments (int argc, char *argv[])
                 options.oneline = 1;
                 break;
             case 'g':
-                options.group_by_day = 1;
+                if (strcmp (optarg, "day") == 0) {
+                    options.group_by = G_DAY;
+                } else if (strcmp (optarg, "category") == 0) {
+                    options.group_by = G_CATEGORY;
+                } else if (strcmp (optarg, "name") == 0) {
+                    options.group_by = G_NAME;
+                } else {
+                    fprintf (stderr, "Error: Invalid group: %s\n", optarg);
+                    return DPL_ERR_INPUT;
+                }
                 break;
             case 's':
                 options.strict = 1;
