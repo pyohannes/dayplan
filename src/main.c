@@ -41,16 +41,18 @@ static const char *usage = "Usage: dayplan [COMMANDS] [OPTIONS]\n"
 "                     obligatory.\n"
 "  -t, --today        Only process today's entries.\n"
 "  -d, --date DATE    Only process entries relevant to the date given. This\n"
-"                     is ignored when used in conjunction with --date-to,\n"
-"                     --date-from or --today.\n"
-"  -b, --date-from DATE\n"
-"                     Only process entries after and including the given date.\n"
-"  -c, --date-to DATE Only process entries before and including the given date.\n"
+"                     is ignored when used in conjunction with --to, --from \n"
+"                     or --today.\n"
+"  -b, --from DATE    Only process entries after and including the given date.\n"
+"  -c, --to DATE      Only process entries before and including the given date.\n"
 "  -o, --oneline      Print all task information in one line.\n"
 "  -s, --strict       Turn warnings into errors.\n"
 "  -g, --group-by name|day|category\n"
 "                     Group accumulated sums by days, entry names or entry \n"
 "                     categories. The default is 'name'.\n"
+"\n"
+"DATE can either be a date in ISO format (YYYY-mm-dd) or one of 'today',\n"
+"'yesterday' or 'tomorrow'.\n"
 "";
 
 
@@ -429,8 +431,8 @@ static int dpl_parse_arguments (int argc, char *argv[])
     static struct option long_options[] = {
         { "today", 0, 0, 't' },
         { "date", 1, 0, 'd' },
-        { "date-from", 1, 0, 'b' },
-        { "date-to", 1, 0, 'c' },
+        { "from", 1, 0, 'b' },
+        { "to", 1, 0, 'c' },
         { "oneline", 0, 0, 'o' },
         { "file", 1, 0, 'f' },
         { "group-by", 1, 0, 'g' },
@@ -441,12 +443,24 @@ static int dpl_parse_arguments (int argc, char *argv[])
     };
 
 #define PARSE_DATE { \
-    time_t now = time (0); \
+    time_t now; \
     int ret; \
-    ret = sscanf (optarg, "%d-%d-%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday); \
-    if (ret != 3) { \
-        fprintf (stderr, "Error: Invalid date format: %s\n", optarg); \
-        return DPL_ERR_INPUT; \
+    if (strcmp (optarg, "yesterday") == 0) { \
+        now = time (0) - 3600 * 24; \
+        localtime_r (&now, &tm); \
+    } else if (strcmp (optarg, "today") == 0) { \
+        now = time (0); \
+        localtime_r (&now, &tm); \
+    } else if (strcmp (optarg, "tomorrow") == 0) { \
+        now = time (0) + 3600 * 24; \
+        localtime_r (&now, &tm); \
+    } else { \
+        ret = sscanf ( \
+                optarg, "%d-%d-%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday); \
+        if (ret != 3) { \
+            fprintf (stderr, "Error: Invalid date format: %s\n", optarg); \
+            return DPL_ERR_INPUT; \
+        } \
     } \
     tm.tm_mon -= 1; \
     tm.tm_year -= 1900; \
@@ -469,18 +483,19 @@ static int dpl_parse_arguments (int argc, char *argv[])
                 options.tm_to = options.tm_from + (3600 * 24) - 1;
                 break;
             case 'b':
-                PARSE_DATE
+                DPL_FORWARD_ERROR (dpl_time_parse_date (optarg, &tm));
+                DPL_FORWARD_ERROR (dpl_time_parse_date (optarg, &tm));
                 options.tm_from = mktime (&tm);
                 if (!options.tm_to) {
                     options.tm_to = LONG_MAX;
                 }
                 break;
             case 'c':
-                PARSE_DATE
+                DPL_FORWARD_ERROR (dpl_time_parse_date (optarg, &tm));
                 options.tm_to = mktime (&tm) + (3600 * 24) - 1;
                 break;
             case 'd':
-                PARSE_DATE
+                DPL_FORWARD_ERROR (dpl_time_parse_date (optarg, &tm));
                 tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
                 options.tm_from = mktime (&tm);
                 options.tm_to = options.tm_from + (3600 * 24) - 1;

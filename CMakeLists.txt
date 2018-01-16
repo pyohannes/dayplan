@@ -80,6 +80,7 @@ set (TESTLIST test/unit/entry_task_1
               test/unit/parse_work_refstr_1
               test/unit/parse_category
               test/unit/time_fmt_durance
+              test/unit/time_parse_date
               test/unit/parse_ref_list_1
               test/unit/acc_durance_1
               test/unit/group_by_day_1

@@ -104,3 +104,34 @@ int dpl_time_fmt_durance (char *buf, size_t bufsize, const char *format,
 
     return DPL_OK;
 }
+
+
+int dpl_time_parse_date (const char *s, struct tm *tm)
+{ 
+    time_t now; 
+    int ret; 
+
+    if (strcmp (s, "yesterday") == 0) { 
+        now = time (0) - 3600 * 24; 
+        localtime_r (&now, tm); 
+    } else if (strcmp (s, "today") == 0) { 
+        now = time (0); 
+        localtime_r (&now, tm); 
+    } else if (strcmp (s, "tomorrow") == 0) { 
+        now = time (0) + 3600 * 24; 
+        localtime_r (&now, tm); 
+    } else { 
+        if (sscanf (s, "%d-%d-%d", 
+                    &tm->tm_year, &tm->tm_mon, &tm->tm_mday) != 3) {
+            fprintf (stderr, "Error: Invalid date format: %s\n", s); 
+            return DPL_ERR_INPUT; 
+        } 
+        tm->tm_mon -= 1; 
+        tm->tm_year -= 1900; 
+    }
+
+    tm->tm_sec = tm->tm_min = tm->tm_hour = 0; 
+    tm->tm_isdst = daylight; 
+
+    return DPL_OK;
+}

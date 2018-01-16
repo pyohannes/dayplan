@@ -38,5 +38,23 @@ int dpl_time_fmt_durance (char *buf, size_t bufsize, const char *format,
  *     - The contents of buf are undefined.
  */
 
-#endif /* DAYPLAN_TIME_H */
 
+/* Parse a date string into a time struct.
+ *
+ * s can contain either an ISO date (YYYY-mm-dd) or one of the following
+ * strings: yesterday, today, tomorrow.
+ *
+ * The time struct contains the date, with the time set to 00:00:00.
+ *
+ * Parameters
+ *   @s A date string. This must not be 0.
+ *   @tm An allocated time struct.
+ *
+ * Returns
+ *   DPL_OK on success. If the string cannot be parsed, DPL_ERR_INPUT is
+ *   returned.
+ */
+int dpl_time_parse_date (const char *s, struct tm *tm);
+
+
+#endif /* DAYPLAN_TIME_H */
