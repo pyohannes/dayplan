@@ -1,0 +1,14 @@
+language: c
+
+addons:
+    apt:
+        packages:
+            - python-pytest
+            - valgrind
+
+script:
+  - mkdir -p bld
+  - cd bld
+  - cmake ..
+  - make
+  - make test
