@@ -9,7 +9,7 @@ jobs:
           name: Installation
           command: |
               sudo apt-get update
-              sudo apt-get install -y cmake python-pytest bison
+              sudo apt-get install -y cmake python-pytest bison valgrind
       - run:
           name: Build
           command: |
