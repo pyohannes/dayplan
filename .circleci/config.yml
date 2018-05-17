@@ -9,7 +9,7 @@ jobs:
           name: Installation
           command: |
               sudo apt-get update
-              sudo apt-get install -y cmake python-pytest bison valgrind
+              sudo apt-get install -y cmake python-pytest bison valgrind xsltproc
       - run:
           name: Build
           command: |
@@ -24,8 +24,8 @@ jobs:
               ctest --no-compress-stdout -T Test || true
               mkdir -p Testing/test-reports/c
               mkdir -p Testing/test-reports/python
-              mv Testing/*/*.xml Testing/test-reports/c
               mv Testing/*.xml Testing/test-reports/python
+              xsltproc ../resource/ctest-to-junit.xsl Testing/*/*.xml > Testing/test-reports-c/c.xml
       - store_test_results:
           path: bld/Testing/test-reports
 
