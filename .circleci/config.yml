@@ -22,10 +22,10 @@ jobs:
           command: |
               cd bld
               ctest --no-compress-stdout -T Test || true
-              mkdir -p Testing/test-reports/c
-              mkdir -p Testing/test-reports/python
-              mv Testing/*.xml Testing/test-reports/python
-              xsltproc ../resource/ctest-to-junit.xsl Testing/*/*.xml > Testing/test-reports/c.xml
+              mkdir -p Testing/test-reports/C
+              mkdir -p Testing/test-reports/Python
+              mv Testing/*.xml Testing/test-reports/Python
+              xsltproc ../resource/ctest-to-junit.xsl Testing/*/*.xml > Testing/test-reports/C/c.xml
       - store_test_results:
           path: bld/Testing/test-reports
 
