@@ -28,3 +28,7 @@ jobs:
               mv Testing/*.xml Testing/test-reports/python
       - store_test_results:
           path: bld/Testing/test-reports
+
+      - store_artifacts:
+          path: bld/Testing/test-reports
+          destination: test-reports
