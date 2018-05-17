@@ -108,7 +108,7 @@ endforeach ()
 
 add_test (
     NAME test/system 
-    COMMAND py.test 
+    COMMAND pytest --junitxml=bld/Testing/python.xml
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties (
     test/system 

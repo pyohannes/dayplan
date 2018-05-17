@@ -1,5 +1,5 @@
-.. image:: https://www.travis-ci.org/pyohannes/dayplan.svg?branch=master
-    :target: https://www.travis-ci.org/pyohannes/dayplan
+.. image:: https://circleci.com/gh/pyohannes/dayplan/tree/master.svg?style=svg
+    :target: https://circleci.com/gh/pyohannes/dayplan/tree/master
 
 dayplan
 =======
